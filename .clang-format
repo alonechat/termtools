@@ -1,0 +1,5 @@
+# .clang-format config file
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never # NEVER use tab

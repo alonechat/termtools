@@ -10,21 +10,21 @@ option(TERMTOOLS_BUILD_TESTS "Build tests" ON)
 option(TERMTOOLS_INSTALL "Generate install target" ON)
 
 set(TERMTOOLS_SOURCES
-    termtools/color.cpp
-    termtools/style.cpp
-    termtools/text.cpp
-    termtools/console.cpp
-    termtools/table.cpp
-    termtools/progress.cpp
-    termtools/status.cpp
-    termtools/logger.cpp
-    termtools/prompt.cpp
-    termtools/keyboard.cpp
-    termtools/panel.cpp
-    termtools/columns.cpp
-    termtools/group.cpp
-    termtools/utils.cpp
-    termtools/platform.cpp
+        termtools/color/color.cpp
+        termtools/core/style.cpp
+        termtools/text/text.cpp
+        termtools/core/console.cpp
+        termtools/ui/table.cpp
+        termtools/progress/progress.cpp
+        termtools/logger/status.cpp
+        termtools/logger/logger.cpp
+        termtools/input/prompt.cpp
+        termtools/input/keyboard.cpp
+        termtools/ui/panel.cpp
+        termtools/ui/columns.cpp
+        termtools/ui/group.cpp
+        termtools/utils/utils.cpp
+        termtools/core/platform.cpp
 )
 
 add_library(termtools STATIC ${TERMTOOLS_SOURCES})

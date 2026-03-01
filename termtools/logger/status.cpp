@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/logger/status.h"
+#include "../core/internal.h"
 #include <sstream>
 
 namespace termtools {

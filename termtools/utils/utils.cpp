@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/utils/utils.h"
+#include "../core/internal.h"
 
 namespace termtools {
 

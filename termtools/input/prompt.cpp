@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/input/prompt.h"
+#include "../core/internal.h"
 #include <iostream>
 #include <sstream>
 #include <limits>

@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "../termtools.h"
+#include "termtools.h"
 
 namespace termtools {
 namespace internal {

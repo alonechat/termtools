@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/text/text.h"
+#include "../core/internal.h"
 #include <sstream>
 #include <algorithm>
 

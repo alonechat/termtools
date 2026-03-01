@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/ui/group.h"
+#include "../core/internal.h"
 #include <sstream>
 
 namespace termtools {

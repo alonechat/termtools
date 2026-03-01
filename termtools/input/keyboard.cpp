@@ -1,5 +1,5 @@
-#include "../termtools.h"
-#include "internal.h"
+#include "termtools/input/keyboard.h"
+#include "../core/internal.h"
 
 #if defined(_WIN32)
 #include <windows.h>

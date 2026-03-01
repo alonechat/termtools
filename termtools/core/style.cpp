@@ -1,4 +1,4 @@
-#include "../termtools.h"
+#include "termtools/core/style.h"
 #include "internal.h"
 #include <sstream>
 

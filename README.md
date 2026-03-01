@@ -379,7 +379,7 @@ TermTools is designed for high performance:
 
 ## License
 
-MIT License
+Apache License 2.0
 
 ## Contributing
 

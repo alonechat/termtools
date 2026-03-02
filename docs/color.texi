@@ -1,0 +1,793 @@
+@c -*-texinfo-*-
+@c This is part of the TermTools manual.
+@c Copyright (C) 2026 TermTools Project.
+
+@node Color System
+@section TermTools 颜色系统
+
+TermTools 颜色系统提供了一套完整的终端颜色解决方案，支持四种颜色类型：默认颜色、命名颜色、256色索引颜色和 RGB 真彩色。该系统设计简洁，易于使用，能够满足从简单到复杂的各种终端着色需求。
+
+@menu
+* Color Overview::              颜色系统概述与设计理念。
+* ColorName Enumeration::       命名颜色枚举类型。
+* Color Class::                 Color 类的完整 API 参考。
+* Color Creation Examples::     颜色创建的代码示例。
+* ANSI Escape Codes::           ANSI 转义码详解。
+* Terminal Color Detection::    终端颜色能力检测。
+@end menu
+
+@node Color Overview
+@subsection 颜色系统概述
+
+TermTools 的颜色系统基于现代终端的标准颜色能力设计，支持以下四种颜色类型：
+
+@table @code
+@item Default
+默认颜色类型。表示使用终端的默认前景色或背景色，不进行任何颜色设置。当需要重置颜色到初始状态时使用此类型。
+
+@item Named
+命名颜色类型。表示 16 种标准终端颜色，包括 8 种基本颜色和 8 种高亮颜色。这是最常用的颜色类型，所有终端模拟器都支持。
+
+@item Index256
+256 色索引类型。使用 0-255 的索引值指定颜色。256 色调色板包含 16 种系统颜色、216 种颜色立方体颜色和 24 种灰度颜色。
+
+@item RGB
+真彩色类型。使用红、绿、蓝三个分量（各 0-255）指定任意颜色。支持真彩色的现代终端可以显示约 1677 万种颜色。
+@end table
+
+颜色系统的核心是 @code{Color} 类，该类使用类型标签来区分不同的颜色表示方式，并提供统一的接口进行颜色操作和 ANSI 转义码生成。
+
+@node ColorName Enumeration
+@subsection ColorName 枚举
+
+@code{ColorName} 枚举定义了 16 种标准终端颜色。这些颜色是所有终端模拟器都支持的基本颜色集，分为标准亮度组和高亮亮度组。
+
+@deftp {Enumeration} ColorName
+定义在头文件 @file{termtools/color/color.h} 中。
+
+@table @code
+@item Black
+黑色，标准亮度，索引值为 0。
+
+@item Red
+红色，标准亮度，索引值为 1。
+
+@item Green
+绿色，标准亮度，索引值为 2。
+
+@item Yellow
+黄色，标准亮度，索引值为 3。
+
+@item Blue
+蓝色，标准亮度，索引值为 4。
+
+@item Magenta
+品红色，标准亮度，索引值为 5。
+
+@item Cyan
+青色，标准亮度，索引值为 6。
+
+@item White
+白色，标准亮度，索引值为 7。
+
+@item BrightBlack
+高亮黑色（灰色），索引值为 8。
+
+@item BrightRed
+高亮红色，索引值为 9。
+
+@item BrightGreen
+高亮绿色，索引值为 10。
+
+@item BrightYellow
+高亮黄色，索引值为 11。
+
+@item BrightBlue
+高亮蓝色，索引值为 12。
+
+@item BrightMagenta
+高亮品红色，索引值为 13。
+
+@item BrightCyan
+高亮青色，索引值为 14。
+
+@item BrightWhite
+高亮白色，索引值为 15。
+@end table
+@end deftp
+
+枚举值的设计遵循 ANSI 颜色码的标准顺序。前 8 个值（0-7）对应标准亮度颜色，后 8 个值（8-15）对应高亮亮度颜色。这种设计使得颜色码的计算变得简单直接。
+
+以下代码展示了如何使用 @code{ColorName} 枚举：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+Color red(ColorName::Red);
+Color bright_blue(ColorName::BrightBlue);
+@end group
+@end example
+
+@node Color Class
+@subsection Color 类
+
+@code{Color} 类是 TermTools 颜色系统的核心类，用于表示和操作终端颜色。该类支持多种颜色表示方式，并能生成相应的 ANSI 转义码。
+
+@deftp {Class} Color
+定义在头文件 @file{termtools/color/color.h} 中，位于 @code{termtools} 命名空间。
+@end deftp
+
+@subheading 构造函数
+
+@deftypefn {Constructor} {} Color()
+构造一个默认颜色对象。默认颜色表示使用终端的默认前景色或背景色。
+
+@example
+@group
+Color c;  // 默认颜色
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Constructor} {} Color(ColorName @var{name})
+构造一个命名颜色对象。参数 @var{name} 指定 16 种标准颜色之一。
+
+@example
+@group
+Color red(ColorName::Red);
+Color bright_green(ColorName::BrightGreen);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Constructor} {} Color(uint8_t @var{r}, uint8_t @var{g}, uint8_t @var{b})
+构造一个 RGB 真彩色对象。参数 @var{r}、@var{g}、@var{b} 分别指定红、绿、蓝分量，取值范围为 0-255。
+
+@example
+@group
+Color orange(255, 165, 0);
+Color purple(128, 0, 128);
+Color custom_blue(70, 130, 180);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Constructor} {} Color(uint8_t @var{index256})
+构造一个 256 色索引颜色对象。参数 @var{index256} 指定颜色索引，取值范围为 0-255。
+
+@example
+@group
+Color index_color(static_cast<uint8_t>(42));
+Color gray(static_cast<uint8_t>(240));
+@end group
+@end example
+@end deftypefn
+
+@subheading 类型查询方法
+
+@deftypefn {Method} {bool} isDefault() const
+检查颜色对象是否为默认颜色类型。
+
+@return
+如果颜色是默认颜色类型，返回 @code{true}；否则返回 @code{false}。
+
+@example
+@group
+Color c;
+if (c.isDefault()) @{
+    // 处理默认颜色
+@}
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {bool} isNamed() const
+检查颜色对象是否为命名颜色类型。
+
+@return
+如果颜色是命名颜色类型，返回 @code{true}；否则返回 @code{false}。
+
+@example
+@group
+Color red(ColorName::Red);
+if (red.isNamed()) @{
+    ColorName name = red.getName();
+@}
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {bool} isRGB() const
+检查颜色对象是否为 RGB 真彩色类型。
+
+@return
+如果颜色是 RGB 真彩色类型，返回 @code{true}；否则返回 @code{false}。
+
+@example
+@group
+Color custom(255, 128, 64);
+if (custom.isRGB()) @{
+    auto [r, g, b] = custom.getRGB();
+@}
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {bool} is256() const
+检查颜色对象是否为 256 色索引类型。
+
+@return
+如果颜色是 256 色索引类型，返回 @code{true}；否则返回 @code{false}。
+
+@example
+@group
+Color index_color(static_cast<uint8_t>(42));
+if (index_color.is256()) @{
+    uint8_t idx = index_color.getIndex256();
+@}
+@end group
+@end example
+@end deftypefn
+
+@subheading 取值方法
+
+@deftypefn {Method} {ColorName} getName() const
+获取命名颜色的枚举值。
+
+@strong{前置条件：} 颜色对象必须是命名颜色类型（@code{isNamed()} 返回 @code{true}）。
+
+@return
+返回颜色的 @code{ColorName} 枚举值。
+
+@example
+@group
+Color c(ColorName::Magenta);
+ColorName name = c.getName();  // 返回 ColorName::Magenta
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {std::tuple<uint8_t, uint8_t, uint8_t>} getRGB() const
+获取 RGB 真彩色的红、绿、蓝分量。
+
+@strong{前置条件：} 颜色对象必须是 RGB 真彩色类型（@code{isRGB()} 返回 @code{true}）。
+
+@return
+返回包含红、绿、蓝三个分量的元组，每个分量取值范围为 0-255。
+
+@example
+@group
+Color c(255, 128, 64);
+auto [r, g, b] = c.getRGB();
+// r = 255, g = 128, b = 64
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {uint8_t} getIndex256() const
+获取 256 色索引颜色的索引值。
+
+@strong{前置条件：} 颜色对象必须是 256 色索引类型（@code{is256()} 返回 @code{true}）。
+
+@return
+返回颜色索引值，取值范围为 0-255。
+
+@example
+@group
+Color c(static_cast<uint8_t>(42));
+uint8_t idx = c.getIndex256();  // 返回 42
+@end group
+@end example
+@end deftypefn
+
+@subheading 转换方法
+
+@deftypefn {Method} {std::string} toAnsi(bool @var{foreground} = true) const
+将颜色对象转换为 ANSI 转义码字符串。
+
+@var{foreground} 参数指定生成的转义码是用于前景色还是背景色：
+@itemize @bullet
+@item @code{true}（默认值）：生成前景色转义码
+@item @code{false}：生成背景色转义码
+@end itemize
+
+@return
+返回 ANSI 转义码字符串，可直接输出到终端。
+
+不同颜色类型生成的转义码格式如下：
+
+@table @code
+@item Default
+前景色：@code{\033[39m}
+背景色：@code{\033[49m}
+
+@item Named
+前景色：@code{\033[30m} - @code{\033[37m}（标准亮度）
+前景色：@code{\033[90m} - @code{\033[97m}（高亮亮度）
+背景色：@code{\033[40m} - @code{\033[47m}（标准亮度）
+背景色：@code{\033[100m} - @code{\033[107m}（高亮亮度）
+
+@item Index256
+前景色：@code{\033[38;5;@var{N}m}
+背景色：@code{\033[48;5;@var{N}m}
+
+@item RGB
+前景色：@code{\033[38;2;@var{R};@var{G};@var{B}m}
+背景色：@code{\033[48;2;@var{R};@var{G};@var{B}m}
+@end table
+
+@example
+@group
+Color red(ColorName::Red);
+std::string fg = red.toAnsi(true);   // 前景色：\033[31m
+std::string bg = red.toAnsi(false);  // 背景色：\033[41m
+
+Color rgb_color(255, 128, 0);
+std::string rgb_ansi = rgb_color.toAnsi();  // \033[38;2;255;128;0m
+@end group
+@end example
+@end deftypefn
+
+@node Color Creation Examples
+@subsection 颜色创建示例
+
+本节提供各种颜色创建方式的完整代码示例。
+
+@subheading 创建默认颜色
+
+默认颜色用于重置终端颜色到初始状态：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Color default_fg;  // 默认前景色
+    Color default_bg = colors::defaultColor();  // 使用辅助函数
+    
+    std::cout << default_fg.toAnsi(true);   // 输出：\033[39m
+    std::cout << default_bg.toAnsi(false);  // 输出：\033[49m
+    
+    return 0;
+@}
+@end group
+@end example
+
+@subheading 创建命名颜色
+
+命名颜色是最常用的颜色类型，所有终端都支持：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    // 使用枚举值创建
+    Color red(ColorName::Red);
+    Color bright_blue(ColorName::BrightBlue);
+    
+    // 使用辅助函数创建
+    Color green = colors::green();
+    Color cyan = colors::cyan();
+    Color bright_yellow = colors::brightYellow();
+    
+    // 输出颜色测试
+    std::cout << red.toAnsi() << "红色文本" << colors::defaultColor().toAnsi() << std::endl;
+    std::cout << bright_blue.toAnsi() << "高亮蓝色文本" << colors::defaultColor().toAnsi() << std::endl;
+    
+    return 0;
+@}
+@end group
+@end example
+
+@subheading 创建 256 色索引颜色
+
+256 色模式提供了比 16 色更丰富的颜色选择：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    // 直接使用索引值
+    Color color1(static_cast<uint8_t>(196));  // 亮红色
+    Color color2(static_cast<uint8_t>(27));   // 蓝色
+    Color color3(static_cast<uint8_t>(226));  // 黄色
+    
+    // 使用辅助函数
+    Color index_color = colors::index(42);
+    
+    // 256 色调色板结构：
+    // 索引 0-15：系统颜色（与命名颜色相同）
+    // 索引 16-231：216 色立方体（6x6x6）
+    // 索引 232-255：24 级灰度
+    
+    // 显示部分 256 色
+    for (int i = 16; i < 232; ++i) @{
+        Color c(static_cast<uint8_t>(i));
+        std::cout << c.toAnsi() << "█";
+    @}
+    std::cout << colors::defaultColor().toAnsi() << std::endl;
+    
+    return 0;
+@}
+@end group
+@end example
+
+@subheading 创建 RGB 真彩色
+
+RGB 真彩色模式可以显示约 1677 万种颜色：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    // 使用 RGB 值创建
+    Color orange(255, 165, 0);      // 橙色
+    Color purple(128, 0, 128);      // 紫色
+    Color steel_blue(70, 130, 180); // 钢蓝色
+    
+    // 使用辅助函数
+    Color custom = colors::rgb(123, 45, 67);
+    
+    // 创建渐变效果
+    for (int i = 0; i < 256; ++i) @{
+        Color gradient(
+            static_cast<uint8_t>(i),
+            static_cast<uint8_t>(255 - i),
+            static_cast<uint8_t>(128)
+        );
+        std::cout << gradient.toAnsi() << "█";
+    @}
+    std::cout << colors::defaultColor().toAnsi() << std::endl;
+    
+    return 0;
+@}
+@end group
+@end example
+
+@subheading 背景色使用示例
+
+@code{toAnsi} 方法的参数可以控制生成前景色或背景色：
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Color bg(ColorName::Blue);
+    Color fg(ColorName::BrightWhite);
+    
+    // 设置背景色
+    std::cout << bg.toAnsi(false);  // \033[44m
+    
+    // 设置前景色
+    std::cout << fg.toAnsi(true);   // \033[97m
+    
+    std::cout << "白字蓝底文本";
+    
+    // 重置颜色
+    std::cout << Color().toAnsi(true) << Color().toAnsi(false);
+    std::cout << std::endl;
+    
+    return 0;
+@}
+@end group
+@end example
+
+@subheading 完整演示程序
+
+以下是一个完整的颜色演示程序：
+
+@example
+@group
+#include "termtools.h"
+#include <iostream>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    // 显示 16 种标准颜色
+    console.println("=== 16 Standard Colors ===");
+    console.println();
+    
+    ColorName colors[] = @{
+        ColorName::Black, ColorName::Red, ColorName::Green, ColorName::Yellow,
+        ColorName::Blue, ColorName::Magenta, ColorName::Cyan, ColorName::White,
+        ColorName::BrightBlack, ColorName::BrightRed, 
+        ColorName::BrightGreen, ColorName::BrightYellow,
+        ColorName::BrightBlue, ColorName::BrightMagenta, 
+        ColorName::BrightCyan, ColorName::BrightWhite
+    @};
+    
+    const char* names[] = @{
+        "Black", "Red", "Green", "Yellow",
+        "Blue", "Magenta", "Cyan", "White",
+        "Bright Black", "Bright Red", 
+        "Bright Green", "Bright Yellow",
+        "Bright Blue", "Bright Magenta", 
+        "Bright Cyan", "Bright White"
+    @};
+    
+    for (int i = 0; i < 16; ++i) @{
+        Text text(names[i]);
+        text.colored(Color(colors[i]));
+        console.println(text);
+    @}
+    
+    // 显示 256 色调色板
+    console.println();
+    console.println("=== 256 Color Palette ===");
+    console.println();
+    
+    for (int i = 0; i < 256; ++i) @{
+        Text block("█");
+        block.colored(Color(static_cast<uint8_t>(i)));
+        console.print(block.render());
+        if ((i + 1) % 32 == 0) @{
+            console.println();
+        @}
+    @}
+    
+    // 显示 RGB 渐变
+    console.println();
+    console.println("=== True Color (RGB) Gradient ===");
+    console.println();
+    
+    for (int i = 0; i < 256; ++i) @{
+        Text block("█");
+        block.colored(Color(
+            static_cast<uint8_t>(i),
+            static_cast<uint8_t>(255 - i),
+            static_cast<uint8_t>(128)
+        ));
+        console.print(block.render());
+    @}
+    
+    console.println();
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node ANSI Escape Codes
+@subsection ANSI 转义码详解
+
+ANSI 转义码是一种用于控制终端文本显示格式的标准序列。TermTools 的颜色系统自动生成符合 ANSI 标准的转义码。
+
+@subheading 转义码结构
+
+ANSI 转义码的基本结构为：
+
+@example
+ESC [ @var{parameters} @var{command}
+@end example
+
+其中：
+@itemize @bullet
+@item @code{ESC} 是转义字符，ASCII 码为 27（八进制 033）
+@item @code{[} 是控制序列引导符（CSI）
+@item @var{parameters} 是参数序列，多个参数用分号分隔
+@item @var{command} 是最终命令字符
+@end itemize
+
+@subheading 颜色相关转义码
+
+@table @code
+@item \033[30m - \033[37m
+标准亮度前景色（黑、红、绿、黄、蓝、品红、青、白）
+
+@item \033[40m - \033[47m
+标准亮度背景色
+
+@item \033[90m - \033[97m
+高亮亮度前景色
+
+@item \033[100m - \033[107m
+高亮亮度背景色
+
+@item \033[38;5;@var{N}m
+256 色前景色，@var{N} 为 0-255 的颜色索引
+
+@item \033[48;5;@var{N}m
+256 色背景色
+
+@item \033[38;2;@var{R};@var{G};@var{B}m
+RGB 真彩色前景色
+
+@item \033[48;2;@var{R};@var{G};@var{B}m
+RGB 真彩色背景色
+
+@item \033[39m
+默认前景色
+
+@item \033[49m
+默认背景色
+
+@item \033[0m
+重置所有属性（包括颜色）
+@end table
+
+@subheading 256 色调色板结构
+
+256 色模式的调色板分为三个部分：
+
+@enumerate
+@item
+索引 0-15：系统颜色，与 16 色模式相同
+
+@item
+索引 16-231：216 色立方体，由 6x6x6 的 RGB 立方体构成
+计算公式：@code{16 + 36*r + 6*g + b}，其中 r、g、b 取值 0-5
+
+@item
+索引 232-255：24 级灰度
+从深灰到浅灰的均匀过渡
+@end enumerate
+
+@subheading 颜色码映射表
+
+命名颜色与 ANSI 码的对应关系：
+
+@multitable @columnfractions .20 .20 .20 .20 .20
+@headitem 颜色名 @tab 枚举值 @tab 前景色码 @tab 背景色码 @tab 说明
+@item Black @tab 0 @tab 30 @tab 40 @tab 黑色
+@item Red @tab 1 @tab 31 @tab 41 @tab 红色
+@item Green @tab 2 @tab 32 @tab 42 @tab 绿色
+@item Yellow @tab 3 @tab 33 @tab 43 @tab 黄色
+@item Blue @tab 4 @tab 34 @tab 44 @tab 蓝色
+@item Magenta @tab 5 @tab 35 @tab 45 @tab 品红
+@item Cyan @tab 6 @tab 36 @tab 46 @tab 青色
+@item White @tab 7 @tab 37 @tab 47 @tab 白色
+@item BrightBlack @tab 8 @tab 90 @tab 100 @tab 高亮黑
+@item BrightRed @tab 9 @tab 91 @tab 101 @tab 高亮红
+@item BrightGreen @tab 10 @tab 92 @tab 102 @tab 高亮绿
+@item BrightYellow @tab 11 @tab 93 @tab 103 @tab 高亮黄
+@item BrightBlue @tab 12 @tab 94 @tab 104 @tab 高亮蓝
+@item BrightMagenta @tab 13 @tab 95 @tab 105 @tab 高亮品红
+@item BrightCyan @tab 14 @tab 96 @tab 106 @tab 高亮青
+@item BrightWhite @tab 15 @tab 97 @tab 107 @tab 高亮白
+@end multitable
+
+@node Terminal Color Detection
+@subsection 终端颜色能力检测
+
+不同的终端模拟器支持不同级别的颜色能力。TermTools 提供了检测终端颜色支持的功能，帮助开发者根据终端能力选择合适的颜色模式。
+
+@subheading 颜色能力级别
+
+终端颜色能力通常分为以下几个级别：
+
+@table @code
+@item 16 色
+最基本的颜色支持，仅支持 8 种标准颜色和 8 种高亮颜色。所有终端模拟器都支持此级别。
+
+@item 256 色
+扩展颜色支持，提供 256 种颜色。大多数现代终端模拟器都支持此级别。
+
+@item 真彩色（True Color）
+完整颜色支持，可显示约 1677 万种颜色。较新的终端模拟器支持此级别。
+@end table
+
+@subheading 检测方法
+
+可以通过环境变量和终端特性来检测颜色能力：
+
+@example
+@group
+#include "termtools.h"
+#include <cstdlib>
+#include <string>
+
+using namespace termtools;
+
+int getColorLevel() @{
+    // 检查 COLORTERM 环境变量
+    const char* colorterm = std::getenv("COLORTERM");
+    if (colorterm) @{
+        std::string ct(colorterm);
+        if (ct == "truecolor" || ct == "24bit") @{
+            return 3;  // 真彩色
+        @}
+    @}
+    
+    // 检查 TERM 环境变量
+    const char* term = std::getenv("TERM");
+    if (term) @{
+        std::string t(term);
+        if (t.find("256color") != std::string::npos) @{
+            return 2;  // 256 色
+        @}
+    @}
+    
+    return 1;  // 默认 16 色
+@}
+
+Color getBestColor(uint8_t r, uint8_t g, uint8_t b) @{
+    int level = getColorLevel();
+    
+    switch (level) @{
+        case 3:
+            return Color(r, g, b);  // 使用真彩色
+        case 2:
+            // 简化为 256 色（此处为示例，实际需要更复杂的转换）
+            return Color(static_cast<uint8_t>((r/51)*36 + (g/51)*6 + (b/51) + 16));
+        default:
+            // 简化为命名颜色
+            if (r > 128 && g > 128 && b > 128) return Color(ColorName::White);
+            if (r > 128) return Color(ColorName::Red);
+            if (g > 128) return Color(ColorName::Green);
+            if (b > 128) return Color(ColorName::Blue);
+            return Color(ColorName::Black);
+    @}
+@}
+@end group
+@end example
+
+@subheading 常见终端的颜色支持
+
+@multitable @columnfractions .30 .20 .20 .30
+@headitem 终端 @tab 16 色 @tab 256 色 @tab 真彩色
+@item xterm @tab 是 @tab 是 @tab 是
+@item GNOME Terminal @tab 是 @tab 是 @tab 是
+@item Konsole @tab 是 @tab 是 @tab 是
+@item iTerm2 @tab 是 @tab 是 @tab 是
+@item Windows Terminal @tab 是 @tab 是 @tab 是
+@item macOS Terminal @tab 是 @tab 是 @tab 否
+@item Linux Console @tab 是 @tab 否 @tab 否
+@item cmd.exe (旧版) @tab 是 @tab 否 @tab 否
+@end multitable
+
+@subheading 最佳实践建议
+
+在使用 TermTools 颜色系统时，建议遵循以下最佳实践：
+
+@enumerate
+@item
+优先使用命名颜色，确保最大兼容性
+
+@item
+对于需要精确颜色的场景，使用 RGB 真彩色
+
+@item
+始终在输出完成后重置颜色，避免影响后续输出
+
+@item
+考虑用户的终端能力，提供降级方案
+
+@item
+避免过度使用颜色，保持输出的可读性
+@end enumerate
+
+@example
+@group
+#include "termtools.h"
+using namespace termtools;
+
+void printColoredMessage(const std::string& msg) @{
+    Console console;
+    
+    // 使用命名颜色确保兼容性
+    Text text(msg);
+    text.colored(Color(ColorName::Green));
+    console.println(text);
+    
+    // 自动重置颜色（Text 类会自动处理）
+@}
+@end group
+@end example
+
+@xref{Text,,Text,text,TermTools Text Processing} 了解如何在文本中使用颜色。
+@xref{Style,,Style,style,TermTools Text Style} 了解如何组合颜色和样式。
+@xref{Console,,Console,console,TermTools Console Output} 了解控制台输出功能。

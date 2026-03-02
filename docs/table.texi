@@ -1,0 +1,1768 @@
+@c -*-texinfo-*-
+@c This is part of the TermTools manual.
+@c Copyright (C) 2024 TermTools Project.
+
+@node Table Component
+@section TermTools 表格组件
+
+TermTools 表格组件是一个功能强大的终端表格渲染库，提供灵活的表格布局、多种边框样式、单元格样式定制、斑马纹效果等功能。该组件设计简洁，支持链式调用，能够满足从简单到复杂的各种表格渲染需求。
+
+@menu
+* Table 类概述::               表格类的整体介绍与设计理念。
+* 列定义与配置::               列的添加、配置与 Column 结构体。
+* 行添加与单元格样式::         行的添加方式与 Cell、CellStyle 结构体。
+* 边框类型::                   七种边框类型与 BorderStyle 结构体。
+* 表头配置::                   表头样式设置与显示控制。
+* 标题与说明::                 表格标题与说明文字的设置。
+* 斑马纹样式::                 交替行颜色与样式的配置。
+* 行列高亮::                   行列高亮与样式回调函数。
+* 页脚行::                     页脚行的添加与样式设置。
+* 完整渲染示例::               综合运用各项功能的代码示例。
+@end menu
+
+@node Table 类概述
+@subsection Table 类概述
+
+@code{Table} 类是 TermTools 表格组件的核心类，定义于头文件 @file{termtools/ui/table.h} 中，位于 @code{termtools} 命名空间。该类采用流式 API 设计，所有配置方法都返回 @code{Table&} 引用，支持链式调用。
+
+@subheading 设计特点
+
+@itemize @bullet
+@item @strong{流式 API}：所有配置方法返回 @code{Table&} 引用，支持链式调用
+@item @strong{灵活的边框系统}：支持七种预定义边框类型，可自定义边框字符
+@item @strong{丰富的样式支持}：支持单元格级别的颜色、样式和对齐方式设置
+@item @strong{斑马纹效果}：支持交替行颜色和样式，提高可读性
+@item @strong{回调机制}：通过回调函数实现动态样式计算
+@item @strong{页脚支持}：支持添加页脚行，适用于统计汇总场景
+@end itemize
+
+@subheading 构造函数
+
+@deftypefn {Constructor} {} Table()
+创建一个空的表格对象。列需要通过 @code{addColumn} 方法添加。
+
+@example
+@group
+#include "termtools/ui/table.h"
+using namespace termtools;
+
+Table table;
+table.addColumn("姓名").addColumn("年龄").addColumn("城市");
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Constructor} {} Table(const std::vector<std::string>& @var{headers})
+创建一个表格对象并使用指定的标题字符串初始化列。
+
+@table @var
+@item headers
+列标题字符串向量，每个元素对应一列的标题。
+@end table
+
+@example
+@group
+#include "termtools/ui/table.h"
+using namespace termtools;
+
+std::vector<std::string> headers = @{"姓名", "年龄", "城市"@};
+Table table(headers);
+@end group
+@end example
+@end deftypefn
+
+@subheading 基本信息查询
+
+@deftypefn {Method} {int} getColumnCount() const
+获取表格的列数。
+
+@return
+返回当前表格的列数。
+@end deftypefn
+
+@deftypefn {Method} {int} getRowCount() const
+获取表格的数据行数（不包括页脚行）。
+
+@return
+返回当前表格的数据行数。
+@end deftypefn
+
+@node 列定义与配置
+@subsection 列定义与配置
+
+表格的列定义是构建表格的第一步。TermTools 提供了两种添加列的方式：简单字符串方式和完整配置方式。
+
+@subheading Column 结构体
+
+@deftp {Struct} Column
+定义于 @code{Table} 类内部，用于描述列的完整配置。
+
+@table @code
+@item std::string header
+列标题文本。该文本将显示在表头行中。
+
+@item Justify justify
+列内容的对齐方式，默认值为 @code{Justify::Left}。可选值包括：
+@itemize @bullet
+@item @code{Justify::Left}：左对齐
+@item @code{Justify::Center}：居中对齐
+@item @code{Justify::Right}：右对齐
+@end itemize
+
+@item int width
+列的固定宽度。如果为 0（默认值），则根据内容自动计算宽度。
+
+@item int minWidth
+列的最小宽度。默认值为 0，表示无最小宽度限制。
+
+@item int maxWidth
+列的最大宽度。默认值为 0，表示无最大宽度限制。
+
+@item bool no_wrap
+是否禁止内容换行。默认值为 @code{false}，允许内容换行。
+
+@item Color headerColor
+列标题的颜色。默认为默认颜色。
+
+@item StyleBuilder headerStyle
+列标题的样式。可用于设置粗体、斜体等效果。
+
+@item bool visible
+列是否可见。默认值为 @code{true}。设置为 @code{false} 可隐藏该列。
+@end table
+@end deftp
+
+@subheading 添加列的方法
+
+@deftypefn {Method} {Table&} addColumn(const std::string& @var{header})
+添加一个简单列，仅指定列标题。其他属性使用默认值。
+
+@table @var
+@item header
+列标题字符串。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名")
+     .addColumn("年龄")
+     .addColumn("城市");
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} addColumn(const Column& @var{column})
+添加一个完整配置的列。通过 @code{Column} 结构体可以指定列的所有属性。
+
+@table @var
+@item column
+列配置结构体。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+
+Table::Column nameCol;
+nameCol.header = "姓名";
+nameCol.justify = Justify::Left;
+nameCol.minWidth = 8;
+nameCol.headerColor = Color(ColorName::Cyan);
+nameCol.headerStyle = StyleBuilder().bold();
+
+table.addColumn(nameCol);
+
+Table::Column ageCol;
+ageCol.header = "年龄";
+ageCol.justify = Justify::Right;
+ageCol.width = 6;
+
+table.addColumn(ageCol);
+
+Table::Column cityCol;
+cityCol.header = "城市";
+cityCol.justify = Justify::Center;
+cityCol.no_wrap = true;
+
+table.addColumn(cityCol);
+@end group
+@end example
+@end deftypefn
+
+@subheading 列配置示例
+
+以下示例展示了如何使用 @code{Column} 结构体进行完整的列配置：
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+using namespace termtools;
+
+void createProductTable() @{
+    Table table;
+    
+    Table::Column productCol;
+    productCol.header = "产品名称";
+    productCol.justify = Justify::Left;
+    productCol.minWidth = 15;
+    productCol.headerColor = Color(ColorName::Green);
+    productCol.headerStyle = StyleBuilder().bold();
+    table.addColumn(productCol);
+    
+    Table::Column priceCol;
+    priceCol.header = "价格";
+    priceCol.justify = Justify::Right;
+    priceCol.width = 10;
+    priceCol.headerColor = Color(ColorName::Yellow);
+    table.addColumn(priceCol);
+    
+    Table::Column stockCol;
+    stockCol.header = "库存";
+    stockCol.justify = Justify::Center;
+    stockCol.width = 8;
+    stockCol.headerColor = Color(ColorName::Cyan);
+    table.addColumn(stockCol);
+    
+    table.addRow(@{"苹果手机", "5999.00", "156"@});
+    table.addRow(@{"笔记本电脑", "8999.00", "42"@});
+    table.addRow(@{"无线耳机", "299.00", "320"@});
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 行添加与单元格样式
+@subsection 行添加与单元格样式
+
+TermTools 提供了多种添加行的方式，支持从简单字符串到完整单元格配置的各种场景。
+
+@subheading Cell 结构体
+
+@deftp {Struct} Cell
+定义于 @code{Table} 类内部，用于描述单元格的内容和样式。
+
+@table @code
+@item std::string content
+单元格的文本内容。
+
+@item CellStyle style
+单元格的样式配置。
+@end table
+
+该结构体提供以下构造函数：
+
+@example
+@group
+Cell();                                    @r{// 默认构造}
+Cell(const std::string& c);                @r{// 仅内容}
+Cell(const char* c);                       @r{// C 字符串}
+Cell(const std::string& c, const CellStyle& s);  @r{// 内容和样式}
+@end group
+@end example
+@end deftp
+
+@subheading CellStyle 结构体
+
+@deftp {Struct} CellStyle
+定义于 @code{termtools/ui/table.h} 中，用于描述单元格的样式配置。
+
+@table @code
+@item Color color
+单元格文本的前景色。
+
+@item StyleBuilder style
+单元格文本的样式（粗体、斜体等）。
+
+@item Justify justify
+单元格内容的对齐方式，默认值为 @code{Justify::Left}。
+
+@item bool hasCustomStyle
+是否设置了自定义样式，默认值为 @code{false}。
+
+@item bool hasCustomJustify
+是否设置了自定义对齐方式，默认值为 @code{false}。
+@end table
+@end deftp
+
+@subheading 添加行的方法
+
+@deftypefn {Method} {Table&} addRow(std::initializer_list<std::string> @var{cells})
+使用初始化列表添加一行字符串单元格。这是最简洁的添加行方式。
+
+@table @var
+@item cells
+字符串初始化列表，每个元素对应一个单元格的内容。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄").addColumn("城市");
+
+table.addRow(@{"张三", "25", "北京"@});
+table.addRow(@{"李四", "30", "上海"@});
+table.addRow(@{"王五", "28", "广州"@});
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} addRow(const std::vector<std::string>& @var{cells})
+使用字符串向量添加一行。
+
+@table @var
+@item cells
+字符串向量，每个元素对应一个单元格的内容。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("项目").addColumn("状态");
+
+std::vector<std::string> row1 = @{"编译", "成功"@};
+std::vector<std::string> row2 = @{"测试", "失败"@};
+
+table.addRow(row1);
+table.addRow(row2);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} addRow(const std::vector<Text>& @var{cells})
+使用 @code{Text} 对象向量添加一行。@code{Text} 对象可以包含样式信息。
+
+@table @var
+@item cells
+@code{Text} 对象向量。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("级别").addColumn("消息");
+
+Text level1("INFO");
+level1.colored(Color(ColorName::Green));
+
+Text msg1("系统启动成功");
+
+Text level2("ERROR");
+level2.colored(Color(ColorName::Red));
+
+Text msg2("连接失败");
+
+std::vector<Text> row1 = @{level1, msg1@};
+std::vector<Text> row2 = @{level2, msg2@};
+
+table.addRow(row1);
+table.addRow(row2);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} addRow(const std::vector<Cell>& @var{cells})
+使用 @code{Cell} 对象向量添加一行。这是最灵活的方式，可以为每个单元格指定完整的样式。
+
+@table @var
+@item cells
+@code{Cell} 对象向量。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("产品").addColumn("价格").addColumn("状态");
+
+CellStyle successStyle;
+successStyle.color = Color(ColorName::Green);
+successStyle.style = StyleBuilder().bold();
+
+CellStyle warningStyle;
+warningStyle.color = Color(ColorName::Yellow);
+
+CellStyle priceStyle;
+priceStyle.justify = Justify::Right;
+priceStyle.color = Color(ColorName::Cyan);
+
+std::vector<Cell> row1 = @{
+    Cell("苹果手机"),
+    Cell("5999.00", priceStyle),
+    Cell("有货", successStyle)
+@};
+
+std::vector<Cell> row2 = @{
+    Cell("笔记本电脑"),
+    Cell("8999.00", priceStyle),
+    Cell("库存不足", warningStyle)
+@};
+
+table.addRow(row1);
+table.addRow(row2);
+@end group
+@end example
+@end deftypefn
+
+@subheading 单元格样式设置示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+using namespace termtools;
+
+void createStyledTable() @{
+    Table table;
+    table.addColumn("任务").addColumn("进度").addColumn("状态");
+    
+    CellStyle inProgressStyle;
+    inProgressStyle.color = Color(ColorName::Yellow);
+    inProgressStyle.style = StyleBuilder().bold();
+    
+    CellStyle completedStyle;
+    completedStyle.color = Color(ColorName::Green);
+    completedStyle.style = StyleBuilder().bold();
+    
+    CellStyle failedStyle;
+    failedStyle.color = Color(ColorName::Red);
+    failedStyle.style = StyleBuilder().bold().underline();
+    
+    CellStyle progressStyle;
+    progressStyle.justify = Justify::Center;
+    
+    std::vector<Cell> row1 = @{
+        Cell("编译代码"),
+        Cell("100%", progressStyle),
+        Cell("完成", completedStyle)
+    @};
+    
+    std::vector<Cell> row2 = @{
+        Cell("运行测试"),
+        Cell("45%", progressStyle),
+        Cell("进行中", inProgressStyle)
+    @};
+    
+    std::vector<Cell> row3 = @{
+        Cell("部署应用"),
+        Cell("0%", progressStyle),
+        Cell("失败", failedStyle)
+    @};
+    
+    table.addRow(row1);
+    table.addRow(row2);
+    table.addRow(row3);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 边框类型
+@subsection 边框类型
+
+TermTools 提供了七种预定义的边框类型，满足不同终端环境和美观需求。
+
+@subheading BorderType 枚举
+
+@deftp {Enumeration} BorderType
+定义于 @file{termtools/ui/table.h} 中，用于指定表格边框的类型。
+
+@table @code
+@item None
+无边框。表格不显示任何边框线，仅保留内容之间的间距。
+
+@item ASCII
+ASCII 边框。使用基本 ASCII 字符绘制边框，兼容所有终端。
+边框字符：@code{+}、@code{-}、@code{|}
+
+@item Unicode
+Unicode 边框。使用 Unicode 制表符绘制边框，外观更加美观。
+边框字符：@code{┌}、@code{┐}、@code{└}、@code{┘}、@code{─}、@code{│}、@code{├}、@code{┤}、@code{┬}、@code{┴}、@code{┼}
+
+@item UnicodeRounded
+圆角 Unicode 边框。与 Unicode 边框类似，但角落使用圆角字符。
+边框字符：@code{╭}、@code{╮}、@code{╰}、@code{╯}、@code{─}、@code{│}
+
+@item UnicodeDouble
+双线 Unicode 边框。使用双线 Unicode 制表符绘制边框。
+边框字符：@code{╔}、@code{╗}、@code{╚}、@code{╝}、@code{═}、@code{║}
+
+@item Markdown
+Markdown 格式边框。生成符合 Markdown 语法的表格格式。
+
+@item Dotted
+点线边框。使用点线字符绘制边框。
+
+@item Heavy
+粗线边框。使用粗线 Unicode 制表符绘制边框。
+@end table
+@end deftp
+
+@subheading BorderStyle 结构体
+
+@deftp {Struct} BorderStyle
+定义于 @file{termtools/ui/table.h} 中，用于描述边框的各个组成部分。
+
+@table @code
+@item std::string topLeft
+左上角字符。
+
+@item std::string topRight
+右上角字符。
+
+@item std::string bottomLeft
+左下角字符。
+
+@item std::string bottomRight
+右下角字符。
+
+@item std::string horizontal
+水平线字符。
+
+@item std::string vertical
+垂直线字符。
+
+@item std::string leftTee
+左 T 字符（连接左边和水平线）。
+
+@item std::string rightTee
+右 T 字符（连接右边和水平线）。
+
+@item std::string topTee
+上 T 字符（连接上边和垂直线）。
+
+@item std::string bottomTee
+下 T 字符（连接下边和垂直线）。
+
+@item std::string cross
+十字交叉字符。
+@end table
+
+该结构体提供静态方法：
+
+@deftypefn {Static Method} {BorderStyle} BorderStyle::get(BorderType @var{type})
+获取指定类型的边框样式。
+
+@table @var
+@item type
+边框类型枚举值。
+@end table
+
+@return
+返回对应类型的 @code{BorderStyle} 结构体。
+@end deftypefn
+@end deftp
+
+@subheading 设置边框的方法
+
+@deftypefn {Method} {Table&} setBorderType(BorderType @var{type})
+设置表格的边框类型。
+
+@table @var
+@item type
+边框类型枚举值。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+table.setBorderType(BorderType::UnicodeRounded);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} setBorderStyle(const StyleBuilder& @var{style})
+设置边框的样式（颜色、粗体等）。
+
+@table @var
+@item style
+边框样式构建器。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+StyleBuilder borderStyle;
+borderStyle.color(Color(ColorName::Cyan));
+
+table.setBorderStyle(borderStyle);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} setShowBorder(bool @var{show})
+设置是否显示边框。
+
+@table @var
+@item show
+如果为 @code{true}，显示边框；否则隐藏边框。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+@end deftypefn
+
+@deftypefn {Method} {Table&} setShowEdge(bool @var{show})
+设置是否显示外边缘边框。
+
+@table @var
+@item show
+如果为 @code{true}，显示外边缘；否则隐藏。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+@end deftypefn
+
+@subheading 边框类型对比示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include <iostream>
+
+using namespace termtools;
+
+void demonstrateBorders() @{
+    std::vector<BorderType> borderTypes = @{
+        BorderType::None,
+        BorderType::ASCII,
+        BorderType::Unicode,
+        BorderType::UnicodeRounded,
+        BorderType::UnicodeDouble,
+        BorderType::Markdown,
+        BorderType::Heavy
+    @};
+    
+    std::vector<std::string> names = @{
+        "None", "ASCII", "Unicode", "Rounded", "Double", "Markdown", "Heavy"
+    @};
+    
+    for (size_t i = 0; i < borderTypes.size(); ++i) @{
+        std::cout << "=== " << names[i] << " Border ===" << std::endl;
+        
+        Table table;
+        table.addColumn("姓名").addColumn("年龄").addColumn("城市");
+        table.addRow(@{"张三", "25", "北京"@});
+        table.addRow(@{"李四", "30", "上海"@});
+        table.setBorderType(borderTypes[i]);
+        
+        std::cout << table.render() << std::endl;
+    @}
+@}
+@end group
+@end example
+
+@node 表头配置
+@subsection 表头配置
+
+表头是表格的重要组成部分，TermTools 提供了灵活的表头样式配置选项。
+
+@subheading 表头样式设置
+
+@deftypefn {Method} {Table&} setHeaderStyle(const StyleBuilder& @var{style})
+设置表头的全局样式。该样式将应用于所有列的标题。
+
+@table @var
+@item style
+样式构建器，可设置粗体、颜色等属性。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄").addColumn("城市");
+
+StyleBuilder headerStyle;
+headerStyle.bold().underline().color(Color(ColorName::Cyan));
+
+table.setHeaderStyle(headerStyle);
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} setHeaderColor(const Color& @var{color})
+设置表头的颜色。这是一个便捷方法，等同于设置只包含颜色的样式。
+
+@table @var
+@item color
+表头颜色。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+table.setHeaderColor(Color(ColorName::Green));
+@end group
+@end example
+@end deftypefn
+
+@subheading 表头显示控制
+
+@deftypefn {Method} {Table&} setShowHeader(bool @var{show})
+设置是否显示表头行。
+
+@table @var
+@item show
+如果为 @code{true}，显示表头；否则隐藏表头。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+table.setShowHeader(false);  @r{// 隐藏表头}
+@end group
+@end example
+@end deftypefn
+
+@subheading 单列表头样式
+
+通过 @code{Column} 结构体可以为每列单独设置表头样式：
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+using namespace termtools;
+
+void createTableWithCustomHeaders() @{
+    Table table;
+    
+    Table::Column nameCol;
+    nameCol.header = "姓名";
+    nameCol.headerColor = Color(ColorName::Green);
+    nameCol.headerStyle = StyleBuilder().bold();
+    table.addColumn(nameCol);
+    
+    Table::Column ageCol;
+    ageCol.header = "年龄";
+    ageCol.headerColor = Color(ColorName::Yellow);
+    ageCol.headerStyle = StyleBuilder().bold();
+    table.addColumn(ageCol);
+    
+    Table::Column cityCol;
+    cityCol.header = "城市";
+    cityCol.headerColor = Color(ColorName::Cyan);
+    cityCol.headerStyle = StyleBuilder().bold();
+    table.addColumn(cityCol);
+    
+    table.addRow(@{"张三", "25", "北京"@});
+    table.addRow(@{"李四", "30", "上海"@});
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 标题与说明
+@subsection 标题与说明
+
+TermTools 支持为表格添加标题和说明文字，使表格信息更加完整。
+
+@subheading 设置标题
+
+@deftypefn {Method} {Table&} setTitle(const std::string& @var{title})
+设置表格的标题。标题将显示在表格上方居中位置。
+
+@table @var
+@item title
+标题文本。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("产品").addColumn("价格");
+
+table.setTitle("产品价格表");
+table.addRow(@{"苹果手机", "5999"@});
+table.addRow(@{"笔记本电脑", "8999"@});
+@end group
+@end example
+@end deftypefn
+
+@subheading 设置说明
+
+@deftypefn {Method} {Table&} setCaption(const std::string& @var{caption})
+设置表格的说明文字。说明将显示在表格下方居中位置。
+
+@table @var
+@item caption
+说明文本。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("项目").addColumn("状态");
+
+table.setCaption("数据更新时间：2024-01-15");
+table.addRow(@{"编译", "成功"@});
+table.addRow(@{"测试", "进行中"@});
+@end group
+@end example
+@end deftypefn
+
+@subheading 标题与说明示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include <iostream>
+
+using namespace termtools;
+
+void createTableWithTitleAndCaption() @{
+    Table table;
+    table.addColumn("排名").addColumn("选手").addColumn("得分");
+    
+    table.setTitle("2024 年编程竞赛决赛成绩");
+    table.setCaption("数据来源：竞赛组委会");
+    
+    table.addRow(@{"1", "张三", "98"@});
+    table.addRow(@{"2", "李四", "95"@});
+    table.addRow(@{"3", "王五", "92"@});
+    
+    table.setBorderType(BorderType::UnicodeRounded);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 斑马纹样式
+@subsection 斑马纹样式
+
+斑马纹（Zebra Stripes）是一种交替行颜色效果，可以显著提高表格的可读性，特别是在行数较多的情况下。
+
+@subheading 启用斑马纹
+
+@deftypefn {Method} {Table&} setZebraStripes(bool @var{enable})
+启用或禁用斑马纹效果。
+
+@table @var
+@item enable
+如果为 @code{true}，启用斑马纹；否则禁用。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+table.setZebraStripes(true);
+@end group
+@end example
+@end deftypefn
+
+@subheading 设置斑马纹颜色
+
+@deftypefn {Method} {Table&} setZebraColors(const Color& @var{odd}, const Color& @var{even})
+设置奇数行和偶数行的背景色。
+
+@table @var
+@item odd
+奇数行（第 1、3、5... 行）的背景色。
+
+@item even
+偶数行（第 2、4、6... 行）的背景色。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+table.setZebraStripes(true);
+table.setZebraColors(
+    Color(40, 44, 52),    @r{// 奇数行：深灰色}
+    Color(50, 54, 62)     @r{// 偶数行：稍浅灰色}
+);
+@end group
+@end example
+@end deftypefn
+
+@subheading 设置斑马纹样式
+
+@deftypefn {Method} {Table&} setZebraStyles(const StyleBuilder& @var{odd}, const StyleBuilder& @var{even})
+设置奇数行和偶数行的完整样式。比 @code{setZebraColors} 更灵活，可以设置更多样式属性。
+
+@table @var
+@item odd
+奇数行的样式构建器。
+
+@item even
+偶数行的样式构建器。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("年龄");
+
+StyleBuilder oddStyle;
+oddStyle.bgColor(Color(30, 30, 40));
+oddStyle.color(Color(ColorName::White));
+
+StyleBuilder evenStyle;
+evenStyle.bgColor(Color(40, 40, 50));
+evenStyle.color(Color(ColorName::BrightWhite));
+
+table.setZebraStripes(true);
+table.setZebraStyles(oddStyle, evenStyle);
+@end group
+@end example
+@end deftypefn
+
+@subheading 斑马纹示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void createZebraTable() @{
+    Table table;
+    table.addColumn("ID").addColumn("名称").addColumn("状态");
+    
+    table.setTitle("任务列表");
+    table.setZebraStripes(true);
+    table.setZebraColors(
+        Color(35, 39, 46),   @r{// One Dark 主题背景色}
+        Color(45, 49, 56)    @r{// 稍浅的背景色}
+    );
+    
+    table.addRow(@{"1", "编译项目", "完成"@});
+    table.addRow(@{"2", "运行测试", "进行中"@});
+    table.addRow(@{"3", "代码审查", "待处理"@});
+    table.addRow(@{"4", "部署应用", "待处理"@});
+    table.addRow(@{"5", "文档更新", "完成"@});
+    
+    table.setBorderType(BorderType::UnicodeRounded);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 行列高亮
+@subsection 行列高亮
+
+TermTools 提供了多种行列高亮方式，包括直接高亮、回调函数动态高亮等。
+
+@subheading 直接高亮行列
+
+@deftypefn {Method} {Table&} highlightRow(int @var{rowIndex}, const StyleBuilder& @var{style})
+高亮指定的行。
+
+@table @var
+@item rowIndex
+行索引（从 0 开始）。
+
+@item style
+高亮样式构建器。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("成绩");
+
+table.addRow(@{"张三", "85"@});
+table.addRow(@{"李四", "92"@});
+table.addRow(@{"王五", "78"@});
+
+StyleBuilder highlight;
+highlight.bgColor(Color(ColorName::Yellow)).color(Color(ColorName::Black));
+
+table.highlightRow(1, highlight);  @r{// 高亮第二行（最高分）}
+@end group
+@end example
+@end deftypefn
+
+@deftypefn {Method} {Table&} highlightColumn(int @var{colIndex}, const Color& @var{color})
+高亮指定的列。
+
+@table @var
+@item colIndex
+列索引（从 0 开始）。
+
+@item color
+高亮颜色。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("姓名").addColumn("成绩").addColumn("备注");
+
+table.addRow(@{"张三", "85", "良好"@});
+table.addRow(@{"李四", "92", "优秀"@});
+
+table.highlightColumn(1, Color(ColorName::Green));  @r{// 高亮成绩列}
+@end group
+@end example
+@end deftypefn
+
+@subheading 行样式回调
+
+@deftp {Type} RowStyleCallback
+行样式回调函数类型定义。
+
+@example
+using RowStyleCallback = std::function<StyleBuilder(int rowIndex, int rowCount)>;
+@end example
+
+回调函数接收行索引和总行数作为参数，返回该行的样式。
+@end deftp
+
+@deftypefn {Method} {Table&} setRowStyleCallback(RowStyleCallback @var{callback})
+设置行样式回调函数。该函数将在渲染每一行时被调用，用于动态计算行样式。
+
+@table @var
+@item callback
+行样式回调函数。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("级别").addColumn("消息");
+
+table.addRow(@{"INFO", "系统启动"@});
+table.addRow(@{"WARN", "内存不足"@});
+table.addRow(@{"ERROR", "连接失败"@});
+table.addRow(@{"INFO", "重试成功"@});
+
+table.setRowStyleCallback([](int rowIndex, int rowCount) @{
+    StyleBuilder style;
+    return style;  @r{// 返回基础样式}
+@});
+@end group
+@end example
+@end deftypefn
+
+@subheading 单元格样式回调
+
+@deftp {Type} CellStyleCallback
+单元格样式回调函数类型定义。
+
+@example
+using CellStyleCallback = std::function<CellStyle(int row, int col, const std::string& content)>;
+@end example
+
+回调函数接收行索引、列索引和单元格内容作为参数，返回该单元格的样式。
+@end deftp
+
+@deftypefn {Method} {Table&} setCellStyleCallback(CellStyleCallback @var{callback})
+设置单元格样式回调函数。该函数将在渲染每个单元格时被调用，用于动态计算单元格样式。
+
+@table @var
+@item callback
+单元格样式回调函数。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("级别").addColumn("消息");
+
+table.addRow(@{"INFO", "系统启动"@});
+table.addRow(@{"WARN", "内存不足"@});
+table.addRow(@{"ERROR", "连接失败"@});
+
+table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+    CellStyle style;
+    
+    if (col == 0) @{  @r{// 级别列}
+        if (content == "INFO") @{
+            style.color = Color(ColorName::Green);
+        @} else if (content == "WARN") @{
+            style.color = Color(ColorName::Yellow);
+        @} else if (content == "ERROR") @{
+            style.color = Color(ColorName::Red);
+            style.style = StyleBuilder().bold();
+        @}
+    @}
+    
+    return style;
+@});
+@end group
+@end example
+@end deftypefn
+
+@subheading 单元格直接修改
+
+@deftypefn {Method} {Table&} setCell(int @var{row}, int @var{col}, const std::string& @var{content})
+设置指定单元格的内容。
+
+@table @var
+@item row
+行索引（从 0 开始）。
+
+@item col
+列索引（从 0 开始）。
+
+@item content
+新的单元格内容。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+@end deftypefn
+
+@deftypefn {Method} {Table&} setCellStyle(int @var{row}, int @var{col}, const CellStyle& @var{style})
+设置指定单元格的样式。
+
+@table @var
+@item row
+行索引（从 0 开始）。
+
+@item col
+列索引（从 0 开始）。
+
+@item style
+单元格样式。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+@end deftypefn
+
+@subheading 高亮示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void createHighlightedTable() @{
+    Table table;
+    table.addColumn("排名").addColumn("选手").addColumn("得分");
+    
+    table.addRow(@{"1", "张三", "98"@});
+    table.addRow(@{"2", "李四", "95"@});
+    table.addRow(@{"3", "王五", "92"@});
+    table.addRow(@{"4", "赵六", "88"@});
+    table.addRow(@{"5", "钱七", "85"@});
+    
+    table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+        CellStyle style;
+        
+        if (col == 0) @{  @r{// 排名列}
+            style.justify = Justify::Center;
+            int rank = std::stoi(content);
+            if (rank == 1) @{
+                style.color = Color(ColorName::Yellow);
+                style.style = StyleBuilder().bold();
+            @} else if (rank <= 3) @{
+                style.color = Color(ColorName::Cyan);
+            @}
+        @} else if (col == 2) @{  @r{// 得分列}
+            style.justify = Justify::Right;
+            int score = std::stoi(content);
+            if (score >= 95) @{
+                style.color = Color(ColorName::Green);
+            @} else if (score >= 90) @{
+                style.color = Color(ColorName::Yellow);
+            @} else @{
+                style.color = Color(ColorName::White);
+            @}
+        @}
+        
+        return style;
+    @});
+    
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setTitle("竞赛成绩榜");
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 页脚行
+@subsection 页脚行
+
+页脚行用于显示表格的汇总信息，如总计、平均值等。页脚行显示在表格数据行的下方，可以有不同的样式。
+
+@subheading 添加页脚行
+
+@deftypefn {Method} {Table&} addFooterRow(const std::vector<std::string>& @var{cells})
+添加一个页脚行。页脚行将显示在所有数据行之后。
+
+@table @var
+@item cells
+页脚行单元格内容向量。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("项目").addColumn("金额");
+
+table.addRow(@{"收入", "10000"@});
+table.addRow(@{"支出", "6500"@});
+
+table.addFooterRow(@{"合计", "3500"@});
+@end group
+@end example
+@end deftypefn
+
+@subheading 设置页脚样式
+
+@deftypefn {Method} {Table&} setFooterStyle(const StyleBuilder& @var{style})
+设置页脚行的全局样式。
+
+@table @var
+@item style
+页脚样式构建器。
+@end table
+
+@return
+返回 @code{Table&} 引用，支持链式调用。
+
+@example
+@group
+Table table;
+table.addColumn("项目").addColumn("金额");
+
+table.addRow(@{"收入", "10000"@});
+table.addRow(@{"支出", "6500"@});
+table.addFooterRow(@{"合计", "3500"@});
+
+StyleBuilder footerStyle;
+footerStyle.bold().color(Color(ColorName::Cyan));
+
+table.setFooterStyle(footerStyle);
+@end group
+@end example
+@end deftypefn
+
+@subheading 页脚行示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void createTableWithFooter() @{
+    Table table;
+    table.addColumn("季度").addColumn("销售额").addColumn("利润");
+    
+    table.addRow(@{"Q1", "250000", "50000"@});
+    table.addRow(@{"Q2", "320000", "75000"@});
+    table.addRow(@{"Q3", "280000", "60000"@});
+    table.addRow(@{"Q4", "400000", "95000"@});
+    
+    table.addFooterRow(@{"总计", "1250000", "280000"@});
+    
+    StyleBuilder footerStyle;
+    footerStyle.bold();
+    footerStyle.color(Color(ColorName::Green));
+    table.setFooterStyle(footerStyle);
+    
+    table.setTitle("年度财务报表");
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setZebraStripes(true);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@node 完整渲染示例
+@subsection 完整渲染示例
+
+本节提供多个综合运用 Table 组件各项功能的完整示例。
+
+@subheading 基础表格示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include <iostream>
+
+using namespace termtools;
+
+void basicTableExample() @{
+    Table table;
+    table.addColumn("姓名")
+         .addColumn("年龄")
+         .addColumn("城市")
+         .addColumn("职业");
+    
+    table.addRow(@{"张三", "25", "北京", "工程师"@});
+    table.addRow(@{"李四", "30", "上海", "设计师"@});
+    table.addRow(@{"王五", "28", "广州", "产品经理"@});
+    table.addRow(@{"赵六", "35", "深圳", "架构师"@});
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@subheading 带样式的表格示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void styledTableExample() @{
+    Table table;
+    
+    Table::Column nameCol;
+    nameCol.header = "姓名";
+    nameCol.headerColor = Color(ColorName::Cyan);
+    nameCol.headerStyle = StyleBuilder().bold();
+    table.addColumn(nameCol);
+    
+    Table::Column ageCol;
+    ageCol.header = "年龄";
+    ageCol.headerColor = Color(ColorName::Yellow);
+    ageCol.justify = Justify::Right;
+    table.addColumn(ageCol);
+    
+    Table::Column statusCol;
+    statusCol.header = "状态";
+    statusCol.headerColor = Color(ColorName::Green);
+    statusCol.justify = Justify::Center;
+    table.addColumn(statusCol);
+    
+    table.addRow(@{"张三", "25", "在线"@});
+    table.addRow(@{"李四", "30", "离线"@});
+    table.addRow(@{"王五", "28", "忙碌"@});
+    
+    table.setTitle("用户状态表");
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setZebraStripes(true);
+    table.setZebraColors(Color(35, 39, 46), Color(45, 49, 56));
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@subheading 日志表格示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void logTableExample() @{
+    Table table;
+    table.addColumn("时间").addColumn("级别").addColumn("消息");
+    
+    table.addRow(@{"10:30:15", "INFO", "系统启动完成"@});
+    table.addRow(@{"10:30:18", "INFO", "数据库连接成功"@});
+    table.addRow(@{"10:30:22", "WARN", "内存使用率超过 80%"@});
+    table.addRow(@{"10:30:25", "ERROR", "无法连接到缓存服务器"@});
+    table.addRow(@{"10:30:28", "INFO", "重试连接成功"@});
+    table.addRow(@{"10:30:30", "DEBUG", "请求处理时间: 45ms"@});
+    
+    table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+        CellStyle style;
+        
+        if (col == 1) @{  @r{// 级别列}
+            style.justify = Justify::Center;
+            style.style = StyleBuilder().bold();
+            
+            if (content == "INFO") @{
+                style.color = Color(ColorName::Green);
+            @} else if (content == "WARN") @{
+                style.color = Color(ColorName::Yellow);
+            @} else if (content == "ERROR") @{
+                style.color = Color(ColorName::Red);
+            @} else if (content == "DEBUG") @{
+                style.color = Color(ColorName::BrightBlack);
+            @}
+        @} else if (col == 2) @{  @r{// 消息列}
+            if (content.find("ERROR") != std::string::npos ||
+                content.find("失败") != std::string::npos) @{
+                style.color = Color(ColorName::Red);
+            @} else if (content.find("WARN") != std::string::npos) @{
+                style.color = Color(ColorName::Yellow);
+            @}
+        @}
+        
+        return style;
+    @});
+    
+    table.setTitle("系统日志");
+    table.setBorderType(BorderType::ASCII);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@subheading 成绩单表格示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void gradeTableExample() @{
+    Table table;
+    table.addColumn("学号").addColumn("姓名").addColumn("语文").addColumn("数学").addColumn("英语").addColumn("平均分");
+    
+    table.addRow(@{"001", "张三", "85", "92", "78", "85.0"@});
+    table.addRow(@{"002", "李四", "90", "88", "95", "91.0"@});
+    table.addRow(@{"003", "王五", "72", "65", "80", "72.3"@});
+    table.addRow(@{"004", "赵六", "95", "98", "92", "95.0"@});
+    table.addRow(@{"005", "钱七", "68", "75", "70", "71.0"@});
+    
+    table.addFooterRow(@{"", "班级平均", "82.0", "83.6", "83.0", "82.9"@});
+    
+    table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+        CellStyle style;
+        
+        if (col >= 2 && col <= 5) @{  @r{// 成绩列}
+            style.justify = Justify::Right;
+            double score = std::stod(content);
+            
+            if (score >= 90) @{
+                style.color = Color(ColorName::Green);
+                style.style = StyleBuilder().bold();
+            @} else if (score >= 80) @{
+                style.color = Color(ColorName::Cyan);
+            @} else if (score >= 60) @{
+                style.color = Color(ColorName::Yellow);
+            @} else @{
+                style.color = Color(ColorName::Red);
+                style.style = StyleBuilder().bold();
+            @}
+        @}
+        
+        return style;
+    @});
+    
+    StyleBuilder footerStyle;
+    footerStyle.bold().color(Color(ColorName::Magenta));
+    table.setFooterStyle(footerStyle);
+    
+    table.setTitle("期末考试成绩单");
+    table.setCaption("优秀(>=90) 良好(>=80) 及格(>=60) 不及格(<60)");
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setZebraStripes(true);
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@subheading 任务列表表格示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include <iostream>
+
+using namespace termtools;
+
+void taskListTableExample() @{
+    Table table;
+    table.addColumn("ID").addColumn("任务").addColumn("优先级").addColumn("状态").addColumn("负责人");
+    
+    table.addRow(@{"T001", "实现用户登录功能", "高", "进行中", "张三"@});
+    table.addRow(@{"T002", "设计数据库架构", "高", "完成", "李四"@});
+    table.addRow(@{"T003", "编写单元测试", "中", "待处理", "王五"@});
+    table.addRow(@{"T004", "优化查询性能", "低", "待处理", "赵六"@});
+    table.addRow(@{"T005", "修复登录 Bug", "高", "进行中", "张三"@});
+    table.addRow(@{"T006", "更新文档", "低", "完成", "钱七"@});
+    
+    table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+        CellStyle style;
+        
+        if (col == 0) @{  @r{// ID 列}
+            style.color = Color(ColorName::Cyan);
+            style.style = StyleBuilder().bold();
+        @} else if (col == 2) @{  @r{// 优先级列}
+            style.justify = Justify::Center;
+            if (content == "高") @{
+                style.color = Color(ColorName::Red);
+                style.style = StyleBuilder().bold();
+            @} else if (content == "中") @{
+                style.color = Color(ColorName::Yellow);
+            @} else @{
+                style.color = Color(ColorName::BrightBlack);
+            @}
+        @} else if (col == 3) @{  @r{// 状态列}
+            style.justify = Justify::Center;
+            if (content == "完成") @{
+                style.color = Color(ColorName::Green);
+            @} else if (content == "进行中") @{
+                style.color = Color(ColorName::Blue);
+            @} else @{
+                style.color = Color(ColorName::BrightBlack);
+            @}
+        @}
+        
+        return style;
+    @});
+    
+    table.setTitle("项目任务列表");
+    table.setBorderType(BorderType::Unicode);
+    table.setZebraStripes(true);
+    table.setZebraColors(Color(30, 30, 35), Color(40, 40, 45));
+    
+    std::cout << table.render() << std::endl;
+@}
+@end group
+@end example
+
+@subheading 使用 Console 输出表格
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/console.h"
+#include <iostream>
+
+using namespace termtools;
+
+void consoleTableExample() @{
+    Console console;
+    
+    Table table;
+    table.addColumn("模块").addColumn("状态").addColumn("版本");
+    
+    table.addRow(@{"核心库", "稳定", "1.2.0"@});
+    table.addRow(@{"UI 组件", "测试中", "1.1.0-beta"@});
+    table.addRow(@{"网络模块", "开发中", "0.5.0-alpha"@});
+    
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setTitle("模块状态");
+    
+    console.println(table.render());
+    
+    console.println();
+    console.println("表格已渲染完成。");
+@}
+@end group
+@end example
+
+@subheading 综合功能示例
+
+@example
+@group
+#include "termtools/ui/table.h"
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+#include "termtools/core/console.h"
+#include <iostream>
+
+using namespace termtools;
+
+void comprehensiveTableExample() @{
+    Console console;
+    
+    Table table;
+    
+    Table::Column idCol;
+    idCol.header = "ID";
+    idCol.justify = Justify::Center;
+    idCol.width = 6;
+    idCol.headerColor = Color(ColorName::Cyan);
+    table.addColumn(idCol);
+    
+    Table::Column nameCol;
+    nameCol.header = "产品名称";
+    nameCol.minWidth = 15;
+    nameCol.headerColor = Color(ColorName::Green);
+    table.addColumn(nameCol);
+    
+    Table::Column priceCol;
+    priceCol.header = "价格";
+    priceCol.justify = Justify::Right;
+    priceCol.width = 10;
+    priceCol.headerColor = Color(ColorName::Yellow);
+    table.addColumn(priceCol);
+    
+    Table::Column stockCol;
+    stockCol.header = "库存";
+    stockCol.justify = Justify::Center;
+    stockCol.width = 8;
+    stockCol.headerColor = Color(ColorName::Magenta);
+    table.addColumn(stockCol);
+    
+    Table::Column statusCol;
+    statusCol.header = "状态";
+    statusCol.justify = Justify::Center;
+    statusCol.width = 10;
+    statusCol.headerColor = Color(ColorName::White);
+    table.addColumn(statusCol);
+    
+    table.addRow(@{"P001", "苹果手机 Pro", "8999.00", "156", "有货"@});
+    table.addRow(@{"P002", "笔记本电脑", "6999.00", "42", "有货"@});
+    table.addRow(@{"P003", "无线耳机", "299.00", "0", "缺货"@});
+    table.addRow(@{"P004", "智能手表", "1999.00", "89", "有货"@});
+    table.addRow(@{"P005", "平板电脑", "4599.00", "5", "库存不足"@});
+    
+    table.addFooterRow(@{"", "总计", "----", "292", ""@});
+    
+    table.setCellStyleCallback([](int row, int col, const std::string& content) @{
+        CellStyle style;
+        
+        if (col == 2) @{  @r{// 价格列}
+            style.color = Color(ColorName::Cyan);
+        @} else if (col == 3) @{  @r{// 库存列}
+            int stock = std::stoi(content);
+            if (stock == 0) @{
+                style.color = Color(ColorName::Red);
+            @} else if (stock < 10) @{
+                style.color = Color(ColorName::Yellow);
+            @} else @{
+                style.color = Color(ColorName::Green);
+            @}
+        @} else if (col == 4) @{  @r{// 状态列}
+            if (content == "有货") @{
+                style.color = Color(ColorName::Green);
+                style.style = StyleBuilder().bold();
+            @} else if (content == "缺货") @{
+                style.color = Color(ColorName::Red);
+                style.style = StyleBuilder().bold();
+            @} else if (content == "库存不足") @{
+                style.color = Color(ColorName::Yellow);
+                style.style = StyleBuilder().bold();
+            @}
+        @}
+        
+        return style;
+    @});
+    
+    StyleBuilder footerStyle;
+    footerStyle.bold().color(Color(ColorName::White));
+    table.setFooterStyle(footerStyle);
+    
+    StyleBuilder headerStyle;
+    headerStyle.bold();
+    table.setHeaderStyle(headerStyle);
+    
+    StyleBuilder borderStyle;
+    borderStyle.color(Color(ColorName::BrightBlack));
+    table.setBorderStyle(borderStyle);
+    
+    table.setTitle("产品库存管理");
+    table.setCaption("更新时间: 2024-01-15 10:30:00");
+    table.setBorderType(BorderType::UnicodeRounded);
+    table.setZebraStripes(true);
+    table.setZebraColors(Color(28, 32, 38), Color(38, 42, 48));
+    table.setPadding(1);
+    
+    console.println(table.render());
+@}
+@end group
+@end example
+
+@xref{Color,,Color,color,TermTools Color System} 了解颜色系统的详细信息。
+@xref{Style,,Style,style,TermTools Text Style} 了解样式系统的详细信息。
+@xref{Console,,Console,console,TermTools Console Output} 了解控制台输出的详细信息。

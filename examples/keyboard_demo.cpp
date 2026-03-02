@@ -11,29 +11,30 @@ int main() {
     console.println("Press keys to see their codes. Press 'q' to quit.");
     console.println();
     
-    Keyboard::setRawMode(true);
+    auto guard = Keyboard::scopeRawMode();
     
     while (true) {
-        Keyboard::KeyEvent event = Keyboard::readKey(true);
+        auto eventOpt = Keyboard::readKey();
+        if (!eventOpt) continue;
         
-        if (event.ch == 'q' || event.ch == 'Q') {
+        KeyEvent event = *eventOpt;
+        
+        if (event.isCharacter() && (event.character == 'q' || event.character == 'Q')) {
             break;
         }
         
-        std::cout << "Key: " << Keyboard::keyToString(event.key);
+        std::cout << "Key: " << Keyboard::keyCodeToString(event.code);
         
-        if (event.ch != '\0') {
-            std::cout << " | Char: '" << event.ch << "'";
+        if (event.isCharacter()) {
+            std::cout << " | Char: '" << event.toString() << "'";
         }
         
-        if (event.ctrl) std::cout << " | Ctrl";
-        if (event.alt) std::cout << " | Alt";
-        if (event.shift) std::cout << " | Shift";
+        if (event.modifiers.ctrl) std::cout << " | Ctrl";
+        if (event.modifiers.alt) std::cout << " | Alt";
+        if (event.modifiers.shift) std::cout << " | Shift";
         
         std::cout << std::endl;
     }
-    
-    Keyboard::setRawMode(false);
     
     console.println();
     console.println("Keyboard demo finished.");

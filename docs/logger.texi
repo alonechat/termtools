@@ -1,0 +1,693 @@
+@node Logger
+@section Logger 日志系统
+
+TermTools Logger 是一个功能强大的日志系统，提供彩色日志输出、多级别日志控制、时间戳显示等功能。该模块还包含 Status 类，用于显示动态状态指示器。
+
+@menu
+* Logger 概述::                    Logger 类的基本介绍。
+* 日志级别::                       五个日志级别的详细说明。
+* Logger API::                     Logger 类的完整 API 参考。
+* 格式化选项::                     日志消息的格式化配置。
+* 时间戳显示::                     时间戳功能的配置与使用。
+* 位置信息显示::                   源代码位置信息的显示配置。
+* Status 状态指示器::              Status 类的使用方法。
+* 代码示例::                       完整的使用示例代码。
+@end menu
+
+@node Logger 概述
+@subsection Logger 概述
+
+@code{Logger} 类是 TermTools 日志系统的核心组件，提供结构化的日志记录功能。主要特性包括：
+
+@itemize @bullet
+@item 五个日志级别：Debug、Info、Warning、Error、Critical
+@item 可配置的日志级别过滤
+@item 彩色日志输出，每个级别使用不同颜色
+@item 可选的时间戳显示
+@item 可选的日志级别标签显示
+@item 可选的源代码位置信息显示
+@item 支持自定义输出格式
+@item 全局日志实例支持
+@end itemize
+
+Logger 类定义在头文件 @file{termtools/logger/logger.h} 中：
+
+@example
+#include "termtools/logger/logger.h"
+@end example
+
+@node 日志级别
+@subsection 日志级别
+
+Logger 系统支持五个日志级别，通过 @code{LogLevel} 枚举定义：
+
+@table @code
+@item LogLevel::Debug
+调试级别，用于开发阶段的详细调试信息。输出颜色为灰色。
+
+@item LogLevel::Info
+信息级别，用于常规的程序运行信息。输出颜色为白色。
+
+@item LogLevel::Warning
+警告级别，用于非致命问题的警告信息。输出颜色为黄色。
+
+@item LogLevel::Error
+错误级别，用于错误情况的报告。输出颜色为红色。
+
+@item LogLevel::Critical
+严重级别，用于严重错误或系统崩溃级别的信息。输出颜色为亮红色（加粗）。
+@end table
+
+@code{LogLevel} 枚举定义如下：
+
+@example
+enum class LogLevel : uint8_t @{
+    Debug,      // 调试信息
+    Info,       // 常规信息
+    Warning,    // 警告信息
+    Error,      // 错误信息
+    Critical    // 严重错误
+@};
+@end example
+
+日志级别按严重程度递增排列。当设置某个日志级别时，只有该级别及更高级别的日志消息会被输出。例如，如果设置为 @code{LogLevel::Warning}，则 Debug 和 Info 级别的消息将被过滤，只有 Warning、Error 和 Critical 级别的消息会显示。
+
+@node Logger API
+@subsection Logger API
+
+本节详细介绍 Logger 类的所有公共方法。
+
+@subheading 构造函数
+
+@deftypefn Constructor explicit Logger (Console& console = Console::getStdout())
+创建一个新的 Logger 实例。
+
+@table @var
+@item console
+输出目标控制台对象，默认使用标准输出。
+@end table
+
+示例：
+
+@example
+Console console;
+Logger logger(console);  // 使用指定控制台
+
+Logger defaultLogger;    // 使用标准输出
+@end example
+@end deftypefn
+
+@subheading 配置方法
+
+@deftypefn Method void setLevel (LogLevel level)
+设置日志级别过滤器。只有级别大于或等于 @var{level} 的日志消息才会被输出。
+
+@table @var
+@item level
+要设置的日志级别。
+@end table
+
+示例：
+
+@example
+logger.setLevel(LogLevel::Warning);  // 只显示 Warning 及以上级别
+@end example
+@end deftypefn
+
+@deftypefn Method void setFormat (const std::string& format)
+设置日志消息的自定义格式字符串。
+
+@table @var
+@item format
+格式字符串，可包含占位符。
+@end table
+@end deftypefn
+
+@deftypefn Method void setShowTime (bool show)
+配置是否在日志消息中显示时间戳。
+
+@table @var
+@item show
+@code{true} 显示时间戳，@code{false} 不显示。
+@end table
+
+示例：
+
+@example
+logger.setShowTime(true);   // 启用时间戳
+logger.setShowTime(false);  // 禁用时间戳
+@end example
+@end deftypefn
+
+@deftypefn Method void setShowLevel (bool show)
+配置是否在日志消息中显示级别标签。
+
+@table @var
+@item show
+@code{true} 显示级别标签，@code{false} 不显示。
+@end table
+@end deftypefn
+
+@deftypefn Method void setShowLocation (bool show)
+配置是否在日志消息中显示源代码位置信息（文件名和行号）。
+
+@table @var
+@item show
+@code{true} 显示位置信息，@code{false} 不显示。
+@end table
+@end deftypefn
+
+@subheading 日志方法
+
+@deftypefn Method void debug (const std::string& message)
+输出 Debug 级别的日志消息。
+
+@table @var
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.debug("变量 x 的值为: " + std::to_string(x));
+@end example
+@end deftypefn
+
+@deftypefn Method void info (const std::string& message)
+输出 Info 级别的日志消息。
+
+@table @var
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.info("应用程序启动成功");
+@end example
+@end deftypefn
+
+@deftypefn Method void warning (const std::string& message)
+输出 Warning 级别的日志消息。
+
+@table @var
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.warning("配置文件不存在，使用默认配置");
+@end example
+@end deftypefn
+
+@deftypefn Method void error (const std::string& message)
+输出 Error 级别的日志消息。
+
+@table @var
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.error("无法打开文件: " + filename);
+@end example
+@end deftypefn
+
+@deftypefn Method void critical (const std::string& message)
+输出 Critical 级别的日志消息。
+
+@table @var
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.critical("内存不足，程序即将退出");
+@end example
+@end deftypefn
+
+@deftypefn Method void log (LogLevel level, const std::string& message)
+通用日志方法，根据指定的级别输出日志消息。
+
+@table @var
+@item level
+日志级别。
+@item message
+日志消息内容。
+@end table
+
+示例：
+
+@example
+logger.log(LogLevel::Info, "这是一条动态级别的日志");
+@end example
+@end deftypefn
+
+@subheading 静态方法
+
+@deftypefn Method static Logger& getLogger ()
+获取全局 Logger 实例引用。这是一个单例模式的实现，方便在整个应用程序中共享同一个 Logger 实例。
+
+示例：
+
+@example
+Logger::getLogger().info("使用全局日志实例");
+Logger::getLogger().setLevel(LogLevel::Debug);
+@end example
+@end deftypefn
+
+@node 格式化选项
+@subsection 格式化选项
+
+Logger 支持自定义日志消息的格式。通过 @code{setFormat} 方法可以设置输出格式：
+
+@example
+logger.setFormat("[@{level@}] @{time@} - @{message@}");
+@end example
+
+格式字符串支持以下占位符：
+
+@table @code
+@item @{level@}
+日志级别标签
+
+@item @{time@}
+时间戳
+
+@item @{message@}
+日志消息内容
+
+@item @{location@}
+源代码位置信息
+@end table
+
+@node 时间戳显示
+@subsection 时间戳显示
+
+时间戳功能可以在每条日志消息前添加时间信息，便于追踪事件发生的时间。
+
+启用时间戳显示：
+
+@example
+Logger logger;
+logger.setShowTime(true);
+logger.info("这条消息带有时间戳");
+@end example
+
+输出示例：
+
+@example
+[2026-01-15 14:30:25] [INFO] 这条消息带有时间戳
+@end example
+
+禁用时间戳显示：
+
+@example
+logger.setShowTime(false);
+@end example
+
+@node 位置信息显示
+@subsection 位置信息显示
+
+位置信息功能可以在日志消息中显示源代码的文件名和行号，便于定位日志输出的位置。
+
+启用位置信息显示：
+
+@example
+logger.setShowLocation(true);
+logger.info("这条消息带有位置信息");
+@end example
+
+输出示例：
+
+@example
+[INFO] main.cpp:42 - 这条消息带有位置信息
+@end example
+
+@node Status 状态指示器
+@subsection Status 状态指示器
+
+@code{Status} 类提供动态状态指示器功能，用于显示长时间运行任务的状态。状态指示器可以在同一行更新显示，适用于显示进度、加载状态等场景。
+
+Status 类定义在头文件 @file{termtools/logger/status.h} 中：
+
+@example
+#include "termtools/logger/status.h"
+@end example
+
+@subheading 构造函数
+
+@deftypefn Constructor Status (const std::string& status, const std::string& message = "")
+创建一个状态指示器实例。
+
+@table @var
+@item status
+状态标签文本。
+@item message
+可选的状态消息文本。
+@end table
+
+示例：
+
+@example
+Status status("Loading", "正在加载配置文件...");
+@end example
+@end deftypefn
+
+@subheading 更新方法
+
+@deftypefn Method void update (const std::string& status, const std::string& message = "")
+更新状态指示器的内容。
+
+@table @var
+@item status
+新的状态标签文本。
+@item message
+新的状态消息文本。
+@end table
+
+示例：
+
+@example
+status.update("Processing", "正在处理数据...");
+@end example
+@end deftypefn
+
+@deftypefn Method void stop ()
+停止状态指示器，清除当前显示的状态信息。
+
+示例：
+
+@example
+status.stop();
+@end example
+@end deftypefn
+
+@subheading 样式配置
+
+@deftypefn Method void setStatusStyle (const StyleBuilder& style)
+设置状态标签的显示样式。
+
+@table @var
+@item style
+使用 StyleBuilder 构建的样式对象。
+@end table
+
+示例：
+
+@example
+Status status("Running", "任务执行中");
+status.setStatusStyle(StyleBuilder().color(Color::green()).bold());
+@end example
+@end deftypefn
+
+@deftypefn Method void setMessageStyle (const StyleBuilder& style)
+设置状态消息的显示样式。
+
+@table @var
+@item style
+使用 StyleBuilder 构建的样式对象。
+@end table
+
+示例：
+
+@example
+status.setMessageStyle(StyleBuilder().color(Color::cyan()));
+@end example
+@end deftypefn
+
+@subheading 静态工厂方法
+
+@deftypefn Method static Status& start (const std::string& status, const std::string& message = "")
+静态方法，创建并启动一个状态指示器，返回引用。
+
+@table @var
+@item status
+状态标签文本。
+@item message
+可选的状态消息文本。
+@end table
+
+示例：
+
+@example
+Status& status = Status::start("Downloading", "正在下载文件...");
+// ... 执行下载操作 ...
+status.update("Extracting", "正在解压文件...");
+// ... 执行解压操作 ...
+status.stop();
+@end example
+@end deftypefn
+
+@node 代码示例
+@subsection 代码示例
+
+@subheading 基本使用示例
+
+以下示例展示 Logger 的基本使用方法：
+
+@example
+#include "termtools.h"
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    Logger logger(console);
+
+    // 输出不同级别的日志
+    logger.debug("这是调试信息");
+    logger.info("这是普通信息");
+    logger.warning("这是警告信息");
+    logger.error("这是错误信息");
+    logger.critical("这是严重错误信息");
+
+    return 0;
+@}
+@end example
+
+@subheading 日志级别过滤示例
+
+以下示例展示如何使用日志级别过滤：
+
+@example
+#include "termtools.h"
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    Logger logger(console);
+
+    // 设置日志级别为 Warning
+    logger.setLevel(LogLevel::Warning);
+
+    // 以下两条消息不会显示
+    logger.debug("这条调试信息不会显示");
+    logger.info("这条普通信息不会显示");
+
+    // 以下三条消息会显示
+    logger.warning("这条警告信息会显示");
+    logger.error("这条错误信息会显示");
+    logger.critical("这条严重错误信息会显示");
+
+    return 0;
+@}
+@end example
+
+@subheading 时间戳示例
+
+以下示例展示时间戳功能的使用：
+
+@example
+#include "termtools.h"
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    Logger logger(console);
+
+    // 启用时间戳
+    logger.setShowTime(true);
+
+    logger.info("应用程序启动");
+    logger.info("正在加载配置");
+    logger.info("初始化完成");
+
+    return 0;
+@}
+@end example
+
+@subheading 全局日志实例示例
+
+以下示例展示全局日志实例的使用：
+
+@example
+#include "termtools.h"
+
+using namespace termtools;
+
+void initializeApp() @{
+    Logger::getLogger().info("初始化应用程序");
+@}
+
+void loadData() @{
+    Logger::getLogger().info("加载数据");
+@}
+
+int main() @{
+    // 配置全局日志
+    Logger::getLogger().setLevel(LogLevel::Info);
+    Logger::getLogger().setShowTime(true);
+
+    // 在不同函数中使用全局日志
+    initializeApp();
+    loadData();
+
+    Logger::getLogger().info("应用程序运行完成");
+
+    return 0;
+@}
+@end example
+
+@subheading Status 状态指示器示例
+
+以下示例展示 Status 类的使用：
+
+@example
+#include "termtools.h"
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+int main() @{
+    // 创建带样式的状态指示器
+    Status status("Loading", "正在初始化系统...");
+    status.setStatusStyle(StyleBuilder().color(Color::green()).bold());
+    status.setMessageStyle(StyleBuilder().color(Color::cyan()));
+
+    // 模拟长时间操作
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    status.update("Processing", "正在处理数据...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    status.update("Saving", "正在保存结果...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    status.stop();
+
+    Logger::getLogger().info("任务完成");
+
+    return 0;
+@}
+@end example
+
+@subheading 静态 Status 启动示例
+
+以下示例展示使用静态 @code{start} 方法：
+
+@example
+#include "termtools.h"
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void downloadFile(const std::string& url) @{
+    Status& status = Status::start("Downloading", url);
+
+    for (int i = 0; i <= 100; i += 20) @{
+        status.update("Downloading", url + " (" + std::to_string(i) + "%)");
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    @}
+
+    status.stop();
+@}
+
+int main() @{
+    downloadFile("https://example.com/file.zip");
+    Logger::getLogger().info("下载完成");
+    return 0;
+@}
+@end example
+
+@subheading 完整功能演示示例
+
+以下示例展示 Logger 和 Status 的完整功能：
+
+@example
+#include "termtools.h"
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    Logger logger(console);
+
+    console.println("=== Logger 功能演示 ===");
+    console.println();
+
+    // 演示所有日志级别
+    logger.debug("调试信息：变量 x = 42");
+    logger.info("普通信息：应用程序启动成功");
+    logger.warning("警告信息：内存使用率达到 80%");
+    logger.error("错误信息：无法连接数据库");
+    logger.critical("严重错误：系统资源耗尽");
+
+    console.println();
+    console.println("=== 日志级别过滤演示 ===");
+    console.println();
+
+    // 设置日志级别
+    logger.setLevel(LogLevel::Warning);
+    logger.info("这条信息不会显示");
+    logger.warning("这条警告会显示");
+    logger.error("这条错误会显示");
+
+    console.println();
+    console.println("=== 时间戳演示 ===");
+    console.println();
+
+    // 创建带时间戳的 Logger
+    Logger timeLogger(console);
+    timeLogger.setShowTime(true);
+    timeLogger.info("这条消息带有时间戳");
+    timeLogger.warning("警告消息也带有时间戳");
+
+    console.println();
+    console.println("=== 状态指示器演示 ===");
+    console.println();
+
+    // 状态指示器演示
+    Status& status = Status::start("Initializing", "正在初始化...");
+    status.setStatusStyle(StyleBuilder().color(Color::blue()).bold());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+    status.update("Loading", "正在加载配置...");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+    status.update("Ready", "系统就绪");
+    status.setStatusStyle(StyleBuilder().color(Color::green()).bold());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+    status.stop();
+
+    console.println();
+    Logger::getLogger().info("演示完成");
+
+    return 0;
+@}
+@end example

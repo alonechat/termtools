@@ -1,0 +1,114 @@
+@node Top
+@chapter TermTools Manual
+
+TermTools is a modern C++ library for terminal UI components, inspired by Python's Rich library.
+This manual provides comprehensive documentation for all modules and components.
+
+@menu
+* Overview::                    Library introduction and quick start guide.
+* Color::                       Color system with 16 colors, 256 colors, and True Color support.
+* Style::                       Text styling including bold, italic, underline, and more.
+* Text::                        Text processing with styling, alignment, and markup support.
+* Console::                     Console output and terminal control operations.
+* Table::                       Flexible table rendering with multiple border styles.
+* Progress::                    Animated progress bars with spinners.
+* Logger::                      Colored log output with multiple log levels.
+* Prompt::                      Interactive user input handling with validation.
+* Keyboard::                    Raw mode keyboard input support.
+* Markdown::                    Markdown content rendering with syntax highlighting.
+* UI Components::               Panel, Divider, Heading, List, Quote, and other UI components.
+* Utilities::                   Utility functions for text processing and terminal detection.
+@end menu
+
+@node Overview
+@section Overview
+
+@xref{Overview,,Overview,overview,TermTools Overview} for the complete introduction.
+
+@include overview.texi
+
+@node Color
+@section Color
+
+@xref{Color,,Color,color,TermTools Color System} for color system documentation.
+
+@include color.texi
+
+@node Style
+@section Style
+
+@xref{Style,,Style,style,TermTools Text Style} for text style documentation.
+
+@include style.texi
+
+@node Text
+@section Text
+
+@xref{Text,,Text,text,TermTools Text Processing} for text processing documentation.
+
+@include text.texi
+
+@node Console
+@section Console
+
+@xref{Console,,Console,console,TermTools Console Output} for console output documentation.
+
+@include console.texi
+
+@node Table
+@section Table
+
+@xref{Table,,Table,table,TermTools Table Component} for table component documentation.
+
+@include table.texi
+
+@node Progress
+@section Progress
+
+@xref{Progress,,Progress,progress,TermTools Progress Bar} for progress bar documentation.
+
+@include progress.texi
+
+@node Logger
+@section Logger
+
+@xref{Logger,,Logger,logger,TermTools Logger System} for logger system documentation.
+
+@include logger.texi
+
+@node Prompt
+@section Prompt
+
+@xref{Prompt,,Prompt,prompt,TermTools Interactive Prompt} for interactive prompt documentation.
+
+@include prompt.texi
+
+@node Keyboard
+@section Keyboard
+
+@xref{Keyboard,,Keyboard,keyboard,TermTools Keyboard Input} for keyboard input documentation.
+
+@include keyboard.texi
+
+@node Markdown
+@section Markdown
+
+@xref{Markdown,,Markdown,markdown,TermTools Markdown Rendering} for markdown rendering documentation.
+
+@include markdown.texi
+
+@node UI Components
+@section UI Components
+
+@xref{UI Components,,UI Components,ui-components,TermTools UI Components} for UI components documentation.
+
+@include ui-components.texi
+
+@node Utilities
+@section Utilities
+
+@xref{Utilities,,Utilities,utils,TermTools Utility Functions} for utility functions documentation.
+
+@include utils.texi
+
+@bye

@@ -1,0 +1,603 @@
+@node Progress
+@section 进度条 (Progress Bar)
+
+TermTools 进度条模块提供了一个功能丰富的进度显示组件，支持动画旋转器、时间估算、颜色自定义等功能。该模块类似于 Python Rich 库的进度条功能，适用于长时间运行任务的进度可视化。
+
+@subsection 进度条类概述
+
+@code{ProgressBar} 类是进度条模块的核心组件。它提供了完整的进度跟踪和可视化功能，包括：
+
+@itemize
+@item 可配置的旋转器动画样式
+@item 自动时间估算和显示
+@item 前缀和后缀自定义
+@item 颜色支持
+@item 多进度条同时显示
+@end itemize
+
+进度条的头文件位于 @file{termtools/progress/progress.h}。
+
+@subsection 构造函数
+
+@deffn {Constructor} ProgressBar(int total, const std::string& description = "", Console& console = Console::getStdout())
+
+创建一个新的进度条实例。
+
+@table @var
+@item total
+任务的总步数。必须为正整数。
+@item description
+进度条的描述文本，显示在进度条左侧。默认为空字符串。
+@item console
+用于输出的控制台对象。默认使用标准输出。
+@end table
+@end deffn
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <vector>
+
+using namespace termtools;
+
+void processFiles() @{
+    std::vector<std::string> files = @{
+        "file1.txt", "file2.txt", "file3.txt", "file4.txt", "file5.txt"
+    @};
+
+    ProgressBar bar(files.size(), "处理文件");
+
+    bar.start();
+    for (const auto& file : files) @{
+        processFile(file);
+        bar.update();
+    @}
+    bar.finish();
+@}
+@end group
+@end example
+
+@subsection 进度更新方法
+
+@deffn {Method} void update(int advance = 1)
+
+将进度向前推进指定步数。默认推进 1 步。
+
+@table @var
+@item advance
+要推进的步数，默认为 1。
+@end table
+@end deffn
+
+@deffn {Method} void setProgress(int current)
+
+直接设置当前进度值。
+
+@table @var
+@item current
+新的当前进度值。
+@end table
+@end deffn
+
+@deffn {Method} int getCurrent() const
+
+返回当前进度值。
+
+@end deffn
+
+@deffn {Method} int getTotal() const
+
+返回总进度值。
+
+@end deffn
+
+@deffn {Method} double getPercentage() const
+
+返回当前完成百分比（0.0 到 100.0）。
+
+@end deffn
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void downloadFile() @{
+    ProgressBar bar(100, "下载文件");
+
+    bar.start();
+    for (int i = 0; i <= 100; ++i) @{
+        bar.setProgress(i);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    @}
+    bar.finish();
+
+    double percent = bar.getPercentage();
+    std::cout << "完成百分比: " << percent << "%" << std::endl;
+@}
+@end group
+@end example
+
+@subsection 样式配置
+
+@deffn {Method} void setDescription(const std::string& description)
+
+设置或更新进度条的描述文本。
+
+@table @var
+@item description
+新的描述文本。
+@end table
+@end deffn
+
+@deffn {Method} void setColor(const Color& color)
+
+设置进度条的颜色。
+
+@table @var
+@item color
+颜色对象，可以是命名颜色、RGB 颜色或 256 色索引。@xref{Color,,Color,Color,TermTools 颜色系统}。
+@end table
+@end deffn
+
+@deffn {Method} void setStyle(SpinnerStyle style)
+
+设置旋转器动画样式。
+
+@table @var
+@item style
+旋转器样式枚举值。
+@end table
+@end deffn
+
+@subsection 旋转器样式
+
+@code{SpinnerStyle} 枚举定义了五种旋转器动画样式：
+
+@table @code
+@item SpinnerStyle::Dots
+点状旋转器，显示为 @code{⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏} 序列。
+
+@item SpinnerStyle::Line
+线状旋转器，显示为 @code{| / - \} 序列。
+
+@item SpinnerStyle::Dots12
+12 点旋转器，显示为 @code{⢀ ⢠ ⢰ ⢸ ⣀ ⣄ ⣤ ⣴ ⣶ ⣾ ⣿ ⡿ ⣟ ⣯ ⣽ ⣻} 序列。
+
+@item SpinnerStyle::Arrow
+箭头旋转器，显示为 @code{← ↖ ↑ ↗ → ↘ ↓ ↙} 序列。
+
+@item SpinnerStyle::SimpleDots
+简单点状旋转器，显示为 @code{⠁ ⠃ ⠇ ⠧ ⠷ ⠿ ⡿ ⣿} 序列。
+@end table
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <termtools/color/color.h>
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void processWithStyle() @{
+    ProgressBar bar(50, "处理数据");
+
+    bar.setStyle(SpinnerStyle::Arrow);
+    bar.setColor(Color(ColorName::Cyan));
+
+    bar.start();
+    for (int i = 0; i < 50; ++i) @{
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        bar.update();
+    @}
+    bar.finish();
+@}
+
+void dynamicDescription() @{
+    ProgressBar bar(10, "阶段 1");
+
+    bar.setStyle(SpinnerStyle::Dots);
+    bar.start();
+
+    for (int i = 0; i < 10; ++i) @{
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        bar.update();
+
+        if (i == 4) @{
+            bar.setDescription("阶段 2");
+        @} else if (i == 7) @{
+            bar.setDescription("阶段 3");
+        @}
+    @}
+    bar.finish();
+@}
+@end group
+@end example
+
+@subsection 前缀和后缀自定义
+
+进度条支持自定义完成状态和进行中状态的前缀与后缀文本。
+
+@deffn {Method} void setCompletedPrefix(const std::string& prefix)
+
+设置进度完成时显示的前缀文本。
+
+@table @var
+@item prefix
+完成状态的前缀字符串。
+@end table
+@end deffn
+
+@deffn {Method} void setCompletedSuffix(const std::string& suffix)
+
+设置进度完成时显示的后缀文本。
+
+@table @var
+@item suffix
+完成状态的后缀字符串。
+@end table
+@end deffn
+
+@deffn {Method} void setInProgressPrefix(const std::string& prefix)
+
+设置进度进行中时显示的前缀文本。
+
+@table @var
+@item prefix
+进行中状态的前缀字符串。
+@end table
+@end deffn
+
+@deffn {Method} void setInProgressSuffix(const std::string& suffix)
+
+设置进度进行中时显示的后缀文本。
+
+@table @var
+@item suffix
+进行中状态的后缀字符串。
+@end table
+@end deffn
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void installPackages() @{
+    ProgressBar bar(5, "安装软件包");
+
+    bar.setInProgressPrefix("[进行中] ");
+    bar.setInProgressSuffix(" 请稍候...");
+    bar.setCompletedPrefix("[完成] ");
+    bar.setCompletedSuffix(" 全部安装成功!");
+
+    bar.start();
+    for (int i = 0; i < 5; ++i) @{
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        bar.update();
+    @}
+    bar.finish();
+@}
+@end group
+@end example
+
+@subsection 时间估算与显示
+
+进度条内部实现了时间估算功能，通过 @code{formatTime} 私有方法格式化时间显示。
+
+时间显示特性：
+
+@itemize
+@item 自动记录开始时间
+@item 实时计算已用时间
+@item 根据当前进度估算剩余时间
+@item 智能时间格式化（秒、分钟、小时）
+@end itemize
+
+时间格式化规则：
+
+@table @code
+@item 小于 60 秒
+显示为 @code{Xs} 格式，例如 @code{45s}。
+
+@item 小于 1 小时
+显示为 @code{Xm Ys} 格式，例如 @code{5m 30s}。
+
+@item 大于等于 1 小时
+显示为 @code{Xh Ym Zs} 格式，例如 @code{1h 23m 45s}。
+@end table
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void longRunningTask() @{
+    ProgressBar bar(100, "长时间任务");
+
+    bar.start();
+
+    for (int i = 0; i < 100; ++i) @{
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        bar.update();
+
+        int current = bar.getCurrent();
+        int total = bar.getTotal();
+        double percent = bar.getPercentage();
+
+        std::cout << "\r当前: " << current << "/" << total
+                  << " (" << percent << "%)" << std::flush;
+    @}
+
+    bar.finish();
+@}
+@end group
+@end example
+
+@subsection 完成状态处理
+
+@deffn {Method} void start()
+
+启动进度条，开始计时并显示初始状态。必须在调用 @code{update} 或 @code{setProgress} 之前调用此方法。
+
+@end deffn
+
+@deffn {Method} void finish()
+
+完成进度条，显示完成状态并输出换行。调用此方法后，进度条将显示完成时的前缀和后缀。
+
+@end deffn
+
+@deffn {Method} void reset()
+
+重置进度条到初始状态。当前进度归零，计时器重置。可以重新调用 @code{start} 开始新的进度跟踪。
+
+@end deffn
+
+@deffn {Method} void refresh()
+
+强制刷新进度条显示。通常在需要立即更新显示时调用。
+
+@end deffn
+
+使用示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <thread>
+#include <chrono>
+
+using namespace termtools;
+
+void repeatedTask() @{
+    ProgressBar bar(10, "重复任务");
+
+    for (int round = 1; round <= 3; ++round) @{
+        bar.setDescription("第 " + std::to_string(round) + " 轮");
+        bar.start();
+
+        for (int i = 0; i < 10; ++i) @{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            bar.update();
+        @}
+
+        bar.finish();
+        bar.reset();
+    @}
+@}
+
+void interactiveProgress() @{
+    ProgressBar bar(100, "交互式进度");
+
+    bar.start();
+
+    for (int i = 0; i < 100; ++i) @{
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+        if (i == 50) @{
+            bar.setDescription("中途检查点");
+            bar.refresh();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            bar.setDescription("继续处理");
+        @}
+
+        bar.update();
+    @}
+
+    bar.finish();
+@}
+@end group
+@end example
+
+@subsection 多进度条使用示例
+
+当需要同时显示多个任务的进度时，可以为每个进度条使用不同的描述和样式。
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <termtools/color/color.h>
+#include <thread>
+#include <chrono>
+#include <vector>
+
+using namespace termtools;
+
+void multiTaskProgress() @{
+    std::vector<ProgressBar> bars;
+
+    bars.emplace_back(20, "任务 A");
+    bars.emplace_back(30, "任务 B");
+    bars.emplace_back(15, "任务 C");
+
+    bars[0].setStyle(SpinnerStyle::Dots);
+    bars[0].setColor(Color(ColorName::Green));
+
+    bars[1].setStyle(SpinnerStyle::Arrow);
+    bars[1].setColor(Color(ColorName::Blue));
+
+    bars[2].setStyle(SpinnerStyle::Line);
+    bars[2].setColor(Color(ColorName::Yellow));
+
+    for (auto& bar : bars) @{
+        bar.start();
+    @}
+
+    bool allDone = false;
+    while (!allDone) @{
+        allDone = true;
+
+        for (size_t i = 0; i < bars.size(); ++i) @{
+            if (bars[i].getCurrent() < bars[i].getTotal()) @{
+                bars[i].update();
+                allDone = false;
+            @}
+        @}
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    @}
+
+    for (auto& bar : bars) @{
+        bar.finish();
+    @}
+@}
+
+void parallelDownload() @{
+    struct Task @{
+        std::string name;
+        int total;
+        int current;
+        ProgressBar bar;
+
+        Task(const std::string& n, int t)
+            : name(n), total(t), current(0), bar(t, n) @{
+            bar.setInProgressPrefix("↓ ");
+            bar.setCompletedPrefix("✓ ");
+        @}
+    @};
+
+    std::vector<Task> tasks;
+    tasks.emplace_back("image.png", 100);
+    tasks.emplace_back("video.mp4", 200);
+    tasks.emplace_back("data.zip", 150);
+
+    for (auto& task : tasks) @{
+        task.bar.start();
+    @}
+
+    bool allDone = false;
+    while (!allDone) @{
+        allDone = true;
+
+        for (auto& task : tasks) @{
+            if (task.current < task.total) @{
+                task.current += (rand() % 5 + 1);
+                if (task.current > task.total) @{
+                    task.current = task.total;
+                @}
+                task.bar.setProgress(task.current);
+                allDone = false;
+            @}
+        @}
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    @}
+
+    for (auto& task : tasks) @{
+        task.bar.finish();
+    @}
+@}
+@end group
+@end example
+
+@subsection 完整示例
+
+以下是一个综合使用进度条各项功能的完整示例：
+
+@example
+@group
+#include <termtools/progress/progress.h>
+#include <termtools/color/color.h>
+#include <thread>
+#include <chrono>
+#include <iostream>
+
+using namespace termtools;
+
+void comprehensiveExample() @{
+    std::cout << "=== 进度条综合示例 ===" << std::endl << std::endl;
+
+    ProgressBar bar(50, "数据处理");
+
+    bar.setStyle(SpinnerStyle::Dots12);
+    bar.setColor(Color(0, 200, 150));
+    bar.setInProgressPrefix("⏳ ");
+    bar.setInProgressSuffix(" 正在处理...");
+    bar.setCompletedPrefix("✅ ");
+    bar.setCompletedSuffix(" 处理完成!");
+
+    bar.start();
+
+    for (int i = 0; i < 50; ++i) @{
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        if (i == 25) @{
+            bar.setDescription("数据处理 [中期检查]");
+            bar.refresh();
+        @}
+
+        bar.update();
+    @}
+
+    bar.finish();
+
+    std::cout << std::endl;
+    std::cout << "最终统计:" << std::endl;
+    std::cout << "  总步数: " << bar.getTotal() << std::endl;
+    std::cout << "  完成百分比: " << bar.getPercentage() << "%" << std::endl;
+@}
+
+int main() @{
+    comprehensiveExample();
+    return 0;
+@}
+@end group
+@end example
+
+@subsection 注意事项
+
+@itemize
+@item 在调用 @code{update} 或 @code{setProgress} 之前，必须先调用 @code{start} 方法。
+@item 进度完成后应调用 @code{finish} 方法，以确保正确显示完成状态。
+@item 如果需要重复使用同一个进度条，调用 @code{reset} 方法重置状态。
+@item 多进度条同时使用时，建议使用不同的颜色和样式以便区分。
+@item 进度条依赖控制台的光标控制功能，在某些终端环境下可能需要特殊处理。
+@end itemize
+
+@subsection 相关参考
+
+@itemize
+@item @xref{Color,,Color,Color,TermTools 颜色系统} - 了解颜色系统的详细用法。
+@item @xref{Console,,Console,Console,TermTools 控制台输出} - 了解控制台输出的详细用法。
+@end itemize

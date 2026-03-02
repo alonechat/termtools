@@ -1,0 +1,647 @@
+@c TermTools Style System Documentation
+@c This file documents the text styling system of TermTools.
+
+@node Style
+@section 样式系统
+
+TermTools 样式系统提供了强大的文本样式设置功能，支持多种文本效果和颜色设置。
+该系统基于 ANSI SGR（Select Graphic Rendition）参数实现，可在支持 ANSI 转义序列的终端中显示丰富的文本样式。
+
+@menu
+* Style 枚举::                 文本样式枚举类型定义。
+* StyleBuilder 类::            样式构建器类的完整 API。
+* 样式组合示例::               多种样式组合使用的代码示例。
+* 颜色设置::                   前景色和背景色的设置方法。
+* ANSI SGR 参数::              ANSI SGR 参数的详细说明。
+@end menu
+
+@node Style 枚举
+@subsection Style 枚举
+
+@code{Style} 枚举定义了八种文本样式，每种样式对应一个 ANSI SGR 参数代码。
+这些样式可以单独使用，也可以组合使用以创建丰富的文本效果。
+
+@code{Style} 枚举定义于头文件 @file{termtools/core/style.h} 中：
+
+@example
+enum class Style : uint8_t @{
+    Bold = 1,          @r{// 粗体}
+    Dim = 2,           @r{// 暗淡}
+    Italic = 3,        @r{// 斜体}
+    Underline = 4,     @r{// 下划线}
+    Blink = 5,         @r{// 闪烁}
+    Reverse = 7,       @r{// 反转前景色和背景色}
+    Hidden = 8,        @r{// 隐藏文本}
+    Strikethrough = 9  @r{// 删除线}
+@};
+@end example
+
+@subsubsection 样式说明
+
+@table @code
+@item Bold
+粗体样式。使文本以更粗的字体显示。在某些终端中，这可能表现为更亮的颜色而非实际的粗体字体。
+对应 ANSI SGR 参数 1。
+
+@item Dim
+暗淡样式。使文本以较暗的颜色显示，通常用于表示次要信息或禁用状态。
+对应 ANSI SGR 参数 2。
+
+@item Italic
+斜体样式。使文本以斜体显示。并非所有终端都支持此样式。
+对应 ANSI SGR 参数 3。
+
+@item Underline
+下划线样式。在文本下方添加下划线。
+对应 ANSI SGR 参数 4。
+
+@item Blink
+闪烁样式。使文本闪烁显示。此样式在某些终端中可能不被支持，或需要特定配置才能生效。
+对应 ANSI SGR 参数 5。
+
+@item Reverse
+反转样式。交换文本的前景色和背景色。这对于高亮显示特定文本非常有用。
+对应 ANSI SGR 参数 7。
+
+@item Hidden
+隐藏样式。使文本不可见，通常用于密码输入等场景。
+对应 ANSI SGR 参数 8。
+
+@item Strikethrough
+删除线样式。在文本中间添加一条横线，表示文本已被删除或废弃。
+对应 ANSI SGR 参数 9。
+@end table
+
+@node StyleBuilder 类
+@subsection StyleBuilder 类
+
+@code{StyleBuilder} 类是样式系统的核心组件，提供了流畅的链式 API 来构建文本样式。
+该类支持设置所有八种文本样式，以及前景色和背景色。
+
+@code{StyleBuilder} 类定义于头文件 @file{termtools/core/style.h} 中。
+
+@subsubsection 构造函数
+
+@deftypefn Constructor StyleBuilder ()
+创建一个默认的样式构建器，所有样式默认禁用，颜色设置为默认值。
+
+@example
+termtools::StyleBuilder builder;
+@end example
+@end deftypefn
+
+@subsubsection 样式方法
+
+所有样式方法都接受一个 @code{bool} 参数，默认值为 @code{true}。
+这些方法返回 @code{StyleBuilder&} 引用，支持链式调用。
+
+@deftypefn Method StyleBuilder& bold (bool enable = true)
+设置或取消粗体样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用粗体样式；如果为 @code{false}，禁用粗体样式。
+@end table
+
+@example
+builder.bold();        @r{// 启用粗体}
+builder.bold(true);    @r{// 启用粗体}
+builder.bold(false);   @r{// 禁用粗体}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& dim (bool enable = true)
+设置或取消暗淡样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用暗淡样式；如果为 @code{false}，禁用暗淡样式。
+@end table
+
+@example
+builder.dim();         @r{// 启用暗淡}
+builder.dim(false);    @r{// 禁用暗淡}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& italic (bool enable = true)
+设置或取消斜体样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用斜体样式；如果为 @code{false}，禁用斜体样式。
+@end table
+
+@example
+builder.italic();      @r{// 启用斜体}
+builder.italic(false); @r{// 禁用斜体}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& underline (bool enable = true)
+设置或取消下划线样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用下划线样式；如果为 @code{false}，禁用下划线样式。
+@end table
+
+@example
+builder.underline();      @r{// 启用下划线}
+builder.underline(false); @r{// 禁用下划线}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& blink (bool enable = true)
+设置或取消闪烁样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用闪烁样式；如果为 @code{false}，禁用闪烁样式。
+@end table
+
+@example
+builder.blink();      @r{// 启用闪烁}
+builder.blink(false); @r{// 禁用闪烁}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& reverse (bool enable = true)
+设置或取消反转样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用反转样式；如果为 @code{false}，禁用反转样式。
+@end table
+
+@example
+builder.reverse();      @r{// 启用反转}
+builder.reverse(false); @r{// 禁用反转}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& hidden (bool enable = true)
+设置或取消隐藏样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用隐藏样式；如果为 @code{false}，禁用隐藏样式。
+@end table
+
+@example
+builder.hidden();      @r{// 启用隐藏}
+builder.hidden(false); @r{// 禁用隐藏}
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& strikethrough (bool enable = true)
+设置或取消删除线样式。
+
+@table @var
+@item enable
+如果为 @code{true}（默认值），启用删除线样式；如果为 @code{false}，禁用删除线样式。
+@end table
+
+@example
+builder.strikethrough();      @r{// 启用删除线}
+builder.strikethrough(false); @r{// 禁用删除线}
+@end example
+@end deftypefn
+
+@subsubsection 颜色方法
+
+@deftypefn Method StyleBuilder& color (const Color& color)
+设置文本的前景色（文字颜色）。
+
+@table @var
+@item color
+一个 @code{Color} 对象，可以是命名颜色、256 色索引或 RGB 真彩色。
+@end table
+
+@xref{Color,,Color,color,TermTools Color System}，了解如何创建 @code{Color} 对象。
+
+@example
+@r{// 使用命名颜色}
+builder.color(termtools::Color(termtools::ColorName::Red));
+
+@r{// 使用 RGB 颜色}
+builder.color(termtools::Color(255, 100, 50));
+
+@r{// 使用 256 色索引}
+builder.color(termtools::Color(196));
+@end example
+@end deftypefn
+
+@deftypefn Method StyleBuilder& bgColor (const Color& color)
+设置文本的背景色。
+
+@table @var
+@item color
+一个 @code{Color} 对象，可以是命名颜色、256 色索引或 RGB 真彩色。
+@end table
+
+@example
+@r{// 使用命名颜色作为背景}
+builder.bgColor(termtools::Color(termtools::ColorName::Blue));
+
+@r{// 使用 RGB 颜色作为背景}
+builder.bgColor(termtools::Color(30, 60, 90));
+@end example
+@end deftypefn
+
+@subsubsection 转换方法
+
+@deftypefn Method std::string toAnsi () const
+生成当前样式的 ANSI 转义序列字符串。该字符串可以附加到输出文本之前，
+使后续文本应用当前设置的样式。
+
+返回值：包含所有启用样式的 ANSI 转义序列字符串。
+
+@example
+termtools::StyleBuilder builder;
+builder.bold().underline();
+std::string ansi = builder.toAnsi();
+@r{// ansi = "\e[1;4m"}
+std::cout << ansi << "粗体下划线文本" << builder.toAnsiReset() << std::endl;
+@end example
+@end deftypefn
+
+@deftypefn Method std::string toAnsiReset () const
+生成重置所有样式的 ANSI 转义序列。该序列用于恢复终端到默认状态。
+
+返回值：ANSI 重置序列字符串 @code{"\e[0m"}。
+
+@example
+std::cout << builder.toAnsi() << "样式文本" << builder.toAnsiReset() << std::endl;
+@end example
+@end deftypefn
+
+@node 样式组合示例
+@subsection 样式组合示例
+
+@code{StyleBuilder} 支持链式调用，可以轻松组合多种样式。
+以下示例展示了各种样式组合的使用方法。
+
+@subsubsection 基本样式组合
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 粗体文本}
+    StyleBuilder bold_style;
+    bold_style.bold();
+    std::cout << bold_style.toAnsi() << "粗体文本" 
+              << bold_style.toAnsiReset() << std::endl;
+    
+    @r{// 斜体和下划线组合}
+    StyleBuilder italic_underline;
+    italic_underline.italic().underline();
+    std::cout << italic_underline.toAnsi() << "斜体下划线文本" 
+              << italic_underline.toAnsiReset() << std::endl;
+    
+    @r{// 粗体、斜体和删除线组合}
+    StyleBuilder combined;
+    combined.bold().italic().strikethrough();
+    std::cout << combined.toAnsi() << "组合样式文本" 
+              << combined.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsubsection 样式与颜色组合
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 红色粗体文本}
+    StyleBuilder red_bold;
+    red_bold.bold().color(Color(ColorName::Red));
+    std::cout << red_bold.toAnsi() << "红色粗体警告" 
+              << red_bold.toAnsiReset() << std::endl;
+    
+    @r{// 绿色背景的白色粗体文本}
+    StyleBuilder success_style;
+    success_style.bold()
+                 .color(Color(ColorName::White))
+                 .bgColor(Color(ColorName::Green));
+    std::cout << success_style.toAnsi() << " 成功 " 
+              << success_style.toAnsiReset() << std::endl;
+    
+    @r{// RGB 颜色与样式组合}
+    StyleBuilder rgb_style;
+    rgb_style.bold().underline()
+             .color(Color(255, 128, 0))    @r{// 橙色前景}
+             .bgColor(Color(40, 40, 60));   @r{// 深蓝背景}
+    std::cout << rgb_style.toAnsi() << "自定义颜色文本" 
+              << rgb_style.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsubsection 高级样式应用
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+void print_header(const std::string& text) @{
+    using namespace termtools;
+    StyleBuilder header;
+    header.bold().underline().color(Color(ColorName::Cyan));
+    std::cout << header.toAnsi() << text << header.toAnsiReset() << std::endl;
+@}
+
+void print_error(const std::string& text) @{
+    using namespace termtools;
+    StyleBuilder error;
+    error.bold().color(Color(ColorName::Red));
+    std::cout << error.toAnsi() << "[错误] " << text 
+              << error.toAnsiReset() << std::endl;
+@}
+
+void print_warning(const std::string& text) @{
+    using namespace termtools;
+    StyleBuilder warning;
+    warning.color(Color(ColorName::Yellow));
+    std::cout << warning.toAnsi() << "[警告] " << text 
+              << warning.toAnsiReset() << std::endl;
+@}
+
+void print_success(const std::string& text) @{
+    using namespace termtools;
+    StyleBuilder success;
+    success.bold().color(Color(ColorName::Green));
+    std::cout << success.toAnsi() << "[成功] " << text 
+              << success.toAnsiReset() << std::endl;
+@}
+
+int main() @{
+    print_header("系统状态报告");
+    print_success("数据库连接成功");
+    print_warning("内存使用率超过 80%");
+    print_error("无法连接到远程服务器");
+    
+    return 0;
+@}
+@end example
+
+@subsubsection 反转样式应用
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 反转样式可用于创建高亮效果}
+    StyleBuilder highlight;
+    highlight.reverse().bold();
+    std::cout << "正常文本 " << highlight.toAnsi() << "高亮文本" 
+              << highlight.toAnsiReset() << " 正常文本" << std::endl;
+    
+    @r{// 结合颜色的反转效果}
+    StyleBuilder color_reverse;
+    color_reverse.reverse()
+                 .color(Color(ColorName::Yellow))
+                 .bgColor(Color(ColorName::Blue));
+    std::cout << color_reverse.toAnsi() << "蓝底黄字（反转后）" 
+              << color_reverse.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@node 颜色设置
+@subsection 颜色设置
+
+@code{StyleBuilder} 支持设置前景色和背景色，颜色可以是命名颜色、256 色索引或 RGB 真彩色。
+@xref{Color,,Color,color,TermTools Color System}，了解颜色系统的完整文档。
+
+@subsubsection 前景色设置
+
+前景色即文本的颜色，使用 @code{color()} 方法设置：
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 使用命名颜色}
+    StyleBuilder s1;
+    s1.color(Color(ColorName::Red));
+    std::cout << s1.toAnsi() << "红色文本" << s1.toAnsiReset() << std::endl;
+    
+    @r{// 使用 256 色}
+    StyleBuilder s2;
+    s2.color(Color(196));  @r{// 亮红色}
+    std::cout << s2.toAnsi() << "256 色文本" << s2.toAnsiReset() << std::endl;
+    
+    @r{// 使用 RGB 真彩色}
+    StyleBuilder s3;
+    s3.color(Color(255, 100, 50));  @r{// 自定义橙色}
+    std::cout << s3.toAnsi() << "RGB 颜色文本" << s3.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsubsection 背景色设置
+
+背景色使用 @code{bgColor()} 方法设置：
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 使用命名颜色作为背景}
+    StyleBuilder s1;
+    s1.bgColor(Color(ColorName::Blue));
+    std::cout << s1.toAnsi() << "蓝色背景" << s1.toAnsiReset() << std::endl;
+    
+    @r{// 使用 RGB 颜色作为背景}
+    StyleBuilder s2;
+    s2.bgColor(Color(60, 60, 80));
+    std::cout << s2.toAnsi() << "自定义背景色" << s2.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsubsection 前景色与背景色组合
+
+@example
+#include <iostream>
+#include "termtools/core/style.h"
+#include "termtools/color/color.h"
+
+int main() @{
+    using namespace termtools;
+    
+    @r{// 白色文字，蓝色背景}
+    StyleBuilder label;
+    label.color(Color(ColorName::White))
+         .bgColor(Color(ColorName::Blue));
+    std::cout << label.toAnsi() << " 标签 " 
+              << label.toAnsiReset() << std::endl;
+    
+    @r{// 黄色文字，红色背景（警告样式）}
+    StyleBuilder warning_label;
+    warning_label.bold()
+                 .color(Color(ColorName::BrightYellow))
+                 .bgColor(Color(ColorName::Red));
+    std::cout << warning_label.toAnsi() << " 警告 " 
+              << warning_label.toAnsiReset() << std::endl;
+    
+    @r{// 使用 RGB 创建渐变效果}
+    StyleBuilder custom;
+    custom.color(Color(255, 255, 255))    @r{// 白色文字}
+          .bgColor(Color(75, 0, 130));     @r{// 靛蓝背景}
+    std::cout << custom.toAnsi() << " 自定义颜色 " 
+              << custom.toAnsiReset() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@node ANSI SGR 参数
+@subsection ANSI SGR 参数说明
+
+ANSI 转义序列是一种用于控制终端显示的标准方式。
+SGR（Select Graphic Rendition）参数用于设置文本的显示属性。
+
+@subsubsection SGR 序列格式
+
+SGR 序列的格式为：@code{ESC[<参数>m}
+
+其中：
+@table @code
+@item ESC
+转义字符，ASCII 码为 27（八进制 033，十六进制 1B），在 C++ 中表示为 @code{\e} 或 @code{\033}。
+@item <参数>
+一个或多个用分号分隔的数字，每个数字代表一个 SGR 参数。
+@item m
+结束字符，表示这是一个 SGR 序列。
+@end table
+
+@subsubsection TermTools 使用的 SGR 参数
+
+@code{StyleBuilder} 内部使用以下 SGR 参数：
+
+@table @code
+@item 0
+重置所有属性。由 @code{toAnsiReset()} 方法返回。
+
+@item 1
+粗体或增加亮度。对应 @code{Style::Bold}。
+
+@item 2
+暗淡。对应 @code{Style::Dim}。
+
+@item 3
+斜体。对应 @code{Style::Italic}。
+
+@item 4
+下划线。对应 @code{Style::Underline}。
+
+@item 5
+慢闪烁。对应 @code{Style::Blink}。
+
+@item 7
+反转前景色和背景色。对应 @code{Style::Reverse}。
+
+@item 8
+隐藏（不可见）。对应 @code{Style::Hidden}。
+
+@item 9
+删除线。对应 @code{Style::Strikethrough}。
+@end table
+
+@subsubsection 颜色相关 SGR 参数
+
+@table @code
+@item 30-37
+标准前景色（黑、红、绿、黄、蓝、品红、青、白）。
+
+@item 40-47
+标准背景色（黑、红、绿、黄、蓝、品红、青、白）。
+
+@item 90-97
+高亮前景色。
+
+@item 100-107
+高亮背景色。
+
+@item 38;5;<n>
+256 色前景色，@code{<n>} 为颜色索引（0-255）。
+
+@item 48;5;<n>
+256 色背景色。
+
+@item 38;2;<r>;<g>;<b>
+RGB 真彩色前景色。
+
+@item 48;2;<r>;<g>;<b>
+RGB 真彩色背景色。
+@end table
+
+@subsubsection ANSI 序列示例
+
+以下是一些 ANSI 序列的实际输出示例：
+
+@example
+@r{// 重置所有样式}
+\e[0m
+
+@r{// 粗体}
+\e[1m
+
+@r{// 粗体和下划线}
+\e[1;4m
+
+@r{// 红色前景}
+\e[31m
+
+@r{// 粗体、红色前景、蓝色背景}
+\e[1;31;44m
+
+@r{// 256 色前景（索引 196）}
+\e[38;5;196m
+
+@r{// RGB 真彩色前景（橙色）}
+\e[38;2;255;128;0m
+@end example
+
+@subsubsection 终端兼容性
+
+大多数现代终端都支持 ANSI SGR 参数，但支持程度可能有所不同：
+
+@itemize
+@item 基本样式（粗体、下划线、反转）在几乎所有终端中都受支持。
+@item 斜体样式在某些终端中可能显示为不同的效果或被忽略。
+@item 闪烁样式在许多现代终端中默认禁用，需要手动启用。
+@item 256 色和 RGB 真彩色需要终端支持相应的颜色模式。
+@end itemize
+
+TermTools 会自动检测终端能力并相应地调整输出，以确保最佳兼容性。

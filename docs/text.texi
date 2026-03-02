@@ -1,0 +1,796 @@
+@c TermTools Text Processing Documentation
+@c Copyright (C) 2026 TermTools Project
+
+@node Text
+@section 文本处理 (Text Processing)
+
+TermTools 的 @code{Text} 类是一个强大的文本处理组件，提供了丰富的文本样式、对齐、填充和标记语法支持。该类的设计灵感来源于 Python 的 Rich 库，旨在为 C++ 开发者提供类似的终端文本处理能力。
+
+@code{Text} 类的核心特性包括：
+@itemize
+@item 支持多种文本创建和初始化方式
+@item 灵活的文本拼接和组合操作
+@item 完整的样式和颜色应用支持
+@item 多种对齐和填充选项
+@item 智能的文本截断和溢出处理
+@item 直观的标记语法解析
+@item 完整的 UTF-8 字符宽度计算支持
+@end itemize
+
+@menu
+* Text 类概述::                Text 类的基本结构和设计理念
+* 文本创建与初始化::           Text 对象的多种构造方式
+* 文本拼接与组合::             append 和 prepend 方法
+* 样式与颜色应用::             styled 和 colored 方法
+* 对齐与填充::                 justify、align 和 padding 方法
+* 截断与溢出处理::             truncate 方法
+* 标记语法::                   fromMarkup 静态方法
+* 宽度计算与 UTF-8 支持::      width、length、plain 和 render 方法
+@end menu
+
+@node Text 类概述
+@subsection Text 类概述
+
+@code{Text} 类定义在头文件 @file{termtools/text/text.h} 中，位于 @code{termtools} 命名空间下。该类采用分段式设计，内部使用 @code{Segment} 结构来存储文本内容和对应的样式信息。
+
+@subheading 类定义
+
+@example
+namespace termtools @{
+
+class Text @{
+  public:
+    Text();
+    explicit Text(const std::string &content);
+    Text(const std::string &content, const Color &color);
+    Text(const std::string &content, const StyleBuilder &style);
+
+    Text &append(const Text &other);
+    Text &append(const std::string &str);
+    Text &append(const std::string &str, const Color &color);
+    Text &append(const std::string &str, const StyleBuilder &style);
+
+    Text &prepend(const Text &other);
+    Text &prepend(const std::string &str);
+
+    Text &styled(const StyleBuilder &style);
+    Text &colored(const Color &color);
+
+    Text &justify(Justify justify, int width = 0);
+    Text &align(Justify justify, int width = 0);
+
+    Text &padLeft(int width, char fill = ' ');
+    Text &padRight(int width, char fill = ' ');
+
+    Text &truncate(int max_width, Overflow overflow = Overflow::Ellipsis);
+
+    std::string plain() const;
+    std::string render() const;
+
+    int width() const;
+    int length() const;
+    bool empty() const;
+
+    static Text fromMarkup(const std::string &markup);
+
+  private:
+    struct Segment @{
+        std::string content;
+        StyleBuilder style;
+    @};
+    std::vector<Segment> segments_;
+@};
+
+@}
+@end example
+
+@subheading 设计理念
+
+@code{Text} 类采用链式调用设计，大多数方法返回 @code{Text&} 引用，允许连续调用多个方法进行文本处理。这种设计使得代码更加简洁和可读。
+
+@example
+Text text("Hello");
+text.colored(Color(ColorName::Red))
+    .append(" World", Color(ColorName::Green))
+    .styled(StyleBuilder().bold().underline());
+@end example
+
+@node 文本创建与初始化
+@subsection 文本创建与初始化
+
+@code{Text} 类提供了四种构造函数，满足不同的初始化需求。
+
+@subheading 默认构造函数
+
+@code{Text()} 创建一个空的文本对象。
+
+@example
+Text emptyText;
+if (emptyText.empty()) @{
+    std::cout << "Text is empty" << std::endl;
+@}
+@end example
+
+@subheading 内容构造函数
+
+@code{Text(const std::string &content)} 使用字符串内容创建文本对象。
+
+@example
+Text text("Hello, TermTools!");
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading 带颜色的构造函数
+
+@code{Text(const std::string &content, const Color &color)} 创建带有指定颜色的文本。
+
+@example
+Text redText("Error", Color(ColorName::Red));
+Text greenText("Success", Color(ColorName::Green));
+Text customColor("Custom", Color(255, 128, 0));
+
+std::cout << redText.render() << std::endl;
+std::cout << greenText.render() << std::endl;
+std::cout << customColor.render() << std::endl;
+@end example
+
+@subheading 带样式的构造函数
+
+@code{Text(const std::string &content, const StyleBuilder &style)} 创建带有完整样式的文本。
+
+@example
+StyleBuilder style;
+style.bold().italic().color(Color(ColorName::Cyan));
+
+Text styledText("Styled Text", style);
+std::cout << styledText.render() << std::endl;
+@end example
+
+@subheading 完整示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text t1;
+    Text t2("Plain text");
+    Text t3("Red text", Color(ColorName::Red));
+    Text t4("Bold blue", StyleBuilder().bold().color(Color(ColorName::Blue)));
+    
+    std::cout << t1.render() << std::endl;
+    std::cout << t2.render() << std::endl;
+    std::cout << t3.render() << std::endl;
+    std::cout << t4.render() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@node 文本拼接与组合
+@subsection 文本拼接与组合
+
+@code{Text} 类提供了 @code{append} 和 @code{prepend} 系列方法用于文本拼接和组合。
+
+@subheading append 方法
+
+@code{append(const Text &other)} 方法将另一个 @code{Text} 对象追加到当前文本末尾。
+
+@example
+Text greeting("Hello, ");
+Text name("TermTools", Color(ColorName::Green));
+greeting.append(name);
+std::cout << greeting.render() << std::endl;
+@end example
+
+@code{append(const std::string &str)} 方法将字符串追加到当前文本末尾。
+
+@example
+Text text("Hello");
+text.append(", World!");
+std::cout << text.render() << std::endl;
+@end example
+
+@code{append(const std::string &str, const Color &color)} 方法追加带颜色的字符串。
+
+@example
+Text text("Status: ");
+text.append("OK", Color(ColorName::Green))
+    .append(" | ")
+    .append("FAIL", Color(ColorName::Red));
+std::cout << text.render() << std::endl;
+@end example
+
+@code{append(const std::string &str, const StyleBuilder &style)} 方法追加带完整样式的字符串。
+
+@example
+Text text("Normal text ");
+StyleBuilder boldRed;
+boldRed.bold().color(Color(ColorName::Red));
+text.append("Bold Red", boldRed);
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading prepend 方法
+
+@code{prepend(const Text &other)} 方法将另一个 @code{Text} 对象添加到当前文本开头。
+
+@example
+Text suffix(" World");
+Text prefix("Hello, ", Color(ColorName::Yellow));
+suffix.prepend(prefix);
+std::cout << suffix.render() << std::endl;
+@end example
+
+@code{prepend(const std::string &str)} 方法将字符串添加到当前文本开头。
+
+@example
+Text text("World");
+text.prepend("Hello, ");
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading 链式调用示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text status;
+    status.append("[")
+          .append("INFO", StyleBuilder().bold().color(Color(ColorName::Green)))
+          .append("] ")
+          .append("Application started successfully");
+    
+    std::cout << status.render() << std::endl;
+    return 0;
+@}
+@end example
+
+@node 样式与颜色应用
+@subsection 样式与颜色应用
+
+@code{Text} 类提供了 @code{styled} 和 @code{colored} 方法用于应用样式和颜色。
+
+@subheading styled 方法
+
+@code{styled(const StyleBuilder &style)} 方法将指定样式应用到文本的所有分段。
+
+@example
+Text text("Important Message");
+StyleBuilder style;
+style.bold().italic().underline().color(Color(ColorName::Yellow));
+text.styled(style);
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading colored 方法
+
+@code{colored(const Color &color)} 方法将指定颜色应用到文本的所有分段。
+
+@example
+Text text("Colored Text");
+text.colored(Color(ColorName::Magenta));
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading 颜色类型
+
+@xref{Color,,Color,color,TermTools Color System}。TermTools 支持三种颜色类型：
+
+@itemize
+@item @strong{命名颜色}：使用 @code{ColorName} 枚举，如 @code{ColorName::Red}、@code{ColorName::Green} 等。
+@item @strong{256 色}：使用 8 位索引值，如 @code{Color(196)} 表示亮红色。
+@item @strong{真彩色}：使用 RGB 值，如 @code{Color(255, 128, 64)}。
+@end itemize
+
+@example
+Text t1("Named Color", Color(ColorName::Blue));
+Text t2("256 Color", Color(196));
+Text t3("RGB Color", Color(255, 128, 64));
+
+std::cout << t1.render() << std::endl;
+std::cout << t2.render() << std::endl;
+std::cout << t3.render() << std::endl;
+@end example
+
+@subheading 样式选项
+
+@xref{Style,,Style,style,TermTools Text Style}。@code{StyleBuilder} 支持以下样式：
+
+@itemize
+@item @code{bold()} - 粗体
+@item @code{dim()} - 暗淡
+@item @code{italic()} - 斜体
+@item @code{underline()} - 下划线
+@item @code{blink()} - 闪烁
+@item @code{reverse()} - 反转前景和背景色
+@item @code{hidden()} - 隐藏文本
+@item @code{strikethrough()} - 删除线
+@end itemize
+
+@example
+Text text("Styled Text");
+StyleBuilder style;
+style.bold().italic().underline().color(Color(ColorName::Cyan));
+text.styled(style);
+std::cout << text.render() << std::endl;
+@end example
+
+@node 对齐与填充
+@subsection 对齐与填充
+
+@code{Text} 类提供了对齐和填充方法，用于控制文本在终端中的显示位置。
+
+@subheading justify 方法
+
+@code{justify(Justify justify, int width = 0)} 方法根据指定的对齐方式和宽度对文本进行对齐。当 @var{width} 为 0 时，自动使用终端宽度。
+
+@code{Justify} 枚举定义了三种对齐方式：
+@itemize
+@item @code{Justify::Left} - 左对齐
+@item @code{Justify::Center} - 居中对齐
+@item @code{Justify::Right} - 右对齐
+@end itemize
+
+@example
+Text leftText("Left");
+leftText.justify(Justify::Left, 20);
+std::cout << "[" << leftText.render() << "]" << std::endl;
+
+Text centerText("Center");
+centerText.justify(Justify::Center, 20);
+std::cout << "[" << centerText.render() << "]" << std::endl;
+
+Text rightText("Right");
+rightText.justify(Justify::Right, 20);
+std::cout << "[" << rightText.render() << "]" << std::endl;
+@end example
+
+@subheading align 方法
+
+@code{align(Justify justify, int width = 0)} 方法是 @code{justify} 的别名，功能完全相同。
+
+@example
+Text text("Aligned");
+text.align(Justify::Center, 30);
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading padLeft 方法
+
+@code{padLeft(int width, char fill = ' ')} 方法在文本左侧填充指定字符，直到达到指定宽度。
+
+@example
+Text text("Padded");
+text.padLeft(15, '.');
+std::cout << "[" << text.render() << "]" << std::endl;
+@end example
+
+输出示例：
+@example
+[.........Padded]
+@end example
+
+@subheading padRight 方法
+
+@code{padRight(int width, char fill = ' ')} 方法在文本右侧填充指定字符，直到达到指定宽度。
+
+@example
+Text text("Padded");
+text.padRight(15, '.');
+std::cout << "[" << text.render() << "]" << std::endl;
+@end example
+
+输出示例：
+@example
+[Padded.........]
+@end example
+
+@subheading 完整示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text header("MENU");
+    header.justify(Justify::Center, 40);
+    header.styled(StyleBuilder().bold().underline());
+    std::cout << header.render() << std::endl;
+    
+    std::cout << std::endl;
+    
+    Text item1("Option 1");
+    item1.padRight(30, '.').append("Enabled", Color(ColorName::Green));
+    std::cout << item1.render() << std::endl;
+    
+    Text item2("Option 2");
+    item2.padRight(30, '.').append("Disabled", Color(ColorName::Red));
+    std::cout << item2.render() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@node 截断与溢出处理
+@subsection 截断与溢出处理
+
+当文本超出指定的最大宽度时，@code{Text} 类提供了 @code{truncate} 方法进行截断处理。
+
+@subheading truncate 方法
+
+@code{truncate(int max_width, Overflow overflow = Overflow::Ellipsis)} 方法根据指定的溢出处理方式截断文本。
+
+@code{Overflow} 枚举定义了四种处理方式：
+@itemize
+@item @code{Overflow::Ellipsis} - 使用省略号截断（默认）
+@item @code{Overflow::Crop} - 直接裁剪，不添加省略号
+@item @code{Overflow::Fold} - 折行显示
+@item @code{Overflow::Ignore} - 忽略宽度限制
+@end itemize
+
+@subheading Ellipsis 模式
+
+使用省略号截断超出部分的文本。
+
+@example
+Text text("This is a very long text that needs to be truncated");
+text.truncate(20, Overflow::Ellipsis);
+std::cout << text.render() << std::endl;
+@end example
+
+输出示例：
+@example
+This is a very lo...
+@end example
+
+@subheading Crop 模式
+
+直接裁剪文本，不添加任何后缀。
+
+@example
+Text text("This is a very long text that needs to be truncated");
+text.truncate(20, Overflow::Crop);
+std::cout << text.render() << std::endl;
+@end example
+
+输出示例：
+@example
+This is a very long 
+@end example
+
+@subheading Fold 模式
+
+将文本折行显示以适应指定宽度。
+
+@example
+Text text("This is a very long text that will be wrapped");
+text.truncate(20, Overflow::Fold);
+std::cout << text.render() << std::endl;
+@end example
+
+输出示例：
+@example
+This is a very long 
+text that will be wr
+apped
+@end example
+
+@subheading Ignore 模式
+
+忽略宽度限制，保持原文本不变。
+
+@example
+Text text("This text will not be truncated");
+text.truncate(10, Overflow::Ignore);
+std::cout << text.render() << std::endl;
+@end example
+
+输出示例：
+@example
+This text will not be truncated
+@end example
+
+@subheading 完整示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    std::string longText = "The quick brown fox jumps over the lazy dog";
+    
+    std::cout << "Ellipsis mode:" << std::endl;
+    Text t1(longText);
+    t1.truncate(25, Overflow::Ellipsis);
+    std::cout << t1.render() << std::endl;
+    
+    std::cout << "\nCrop mode:" << std::endl;
+    Text t2(longText);
+    t2.truncate(25, Overflow::Crop);
+    std::cout << t2.render() << std::endl;
+    
+    std::cout << "\nFold mode:" << std::endl;
+    Text t3(longText);
+    t3.truncate(25, Overflow::Fold);
+    std::cout << t3.render() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@node 标记语法
+@subsection 标记语法
+
+@code{Text} 类提供了 @code{fromMarkup} 静态方法，支持使用标记语法快速创建带样式的文本。
+
+@subheading fromMarkup 方法
+
+@code{static Text fromMarkup(const std::string &markup)} 解析标记字符串并返回相应的 @code{Text} 对象。
+
+@subheading 支持的样式标签
+
+@itemize
+@item @code{[bold]} ... @code{[/bold]} - 粗体
+@item @code{[italic]} ... @code{[/italic]} - 斜体
+@item @code{[underline]} ... @code{[/underline]} - 下划线
+@item @code{[dim]} ... @code{[/dim]} - 暗淡
+@end itemize
+
+@subheading 支持的颜色标签
+
+@itemize
+@item @code{[red]} - 红色
+@item @code{[green]} - 绿色
+@item @code{[blue]} - 蓝色
+@item @code{[yellow]} - 黄色
+@item @code{[magenta]} - 品红色
+@item @code{[cyan]} - 青色
+@item @code{[white]} - 白色
+@end itemize
+
+@subheading 自定义颜色
+
+使用十六进制颜色码指定任意颜色：@code{[#RRGGBB]}
+
+@example
+Text text = Text::fromMarkup("Custom [#FF8800]Orange[/red] color");
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading 基本示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text text1 = Text::fromMarkup("[bold]Bold text[/bold]");
+    std::cout << text1.render() << std::endl;
+    
+    Text text2 = Text::fromMarkup("[red]Red text[/red]");
+    std::cout << text2.render() << std::endl;
+    
+    Text text3 = Text::fromMarkup("[bold][green]Bold Green[/green][/bold]");
+    std::cout << text3.render() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subheading 嵌套标签示例
+
+@example
+Text text = Text::fromMarkup(
+    "[bold]This is bold and [red]red[/red] text[/bold]"
+);
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading 复杂示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text log = Text::fromMarkup(
+        "[bold][green]INFO[/green][/bold] Application [underline]started[/underline] "
+        "with [cyan]configuration[/cyan] file"
+    );
+    std::cout << log.render() << std::endl;
+    
+    Text error = Text::fromMarkup(
+        "[bold][red]ERROR[/red][/bold] Failed to [italic]connect[/italic] "
+        "to server at [#888888]192.168.1.1:8080[/red]"
+    );
+    std::cout << error.render() << std::endl;
+    
+    Text warning = Text::fromMarkup(
+        "[bold][yellow]WARNING[/yellow][/bold] Memory usage at [red]95%[/red]"
+    );
+    std::cout << warning.render() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subheading 标签嵌套规则
+
+标记标签可以嵌套使用，内层标签会覆盖外层标签的相应属性。样式标签（如 @code{[bold]}）可以与颜色标签组合使用。
+
+@example
+Text text = Text::fromMarkup(
+    "[bold]Bold [italic]Bold+Italic [red]Bold+Italic+Red[/red][/italic] Bold again[/bold]"
+);
+std::cout << text.render() << std::endl;
+@end example
+
+@node 宽度计算与 UTF-8 支持
+@subsection 宽度计算与 UTF-8 支持
+
+@code{Text} 类提供了多个方法用于获取文本信息和渲染输出，并完整支持 UTF-8 字符宽度计算。
+
+@subheading width 方法
+
+@code{width() const} 返回文本的显示宽度（以字符为单位）。该方法正确处理 UTF-8 多字节字符和宽字符（如中文、日文等）。
+
+@example
+Text text("你好 World");
+std::cout << "Width: " << text.width() << std::endl;
+@end example
+
+输出示例：
+@example
+Width: 9
+@end example
+
+@subheading length 方法
+
+@code{length() const} 返回文本的字节长度。
+
+@example
+Text text("你好 World");
+std::cout << "Length: " << text.length() << std::endl;
+@end example
+
+输出示例：
+@example
+Length: 11
+@end example
+
+@subheading empty 方法
+
+@code{empty() const} 检查文本是否为空。
+
+@example
+Text t1;
+Text t2("");
+Text t3("text");
+
+std::cout << "t1.empty(): " << (t1.empty() ? "true" : "false") << std::endl;
+std::cout << "t2.empty(): " << (t2.empty() ? "true" : "false") << std::endl;
+std::cout << "t3.empty(): " << (t3.empty() ? "true" : "false") << std::endl;
+@end example
+
+输出示例：
+@example
+t1.empty(): true
+t2.empty(): true
+t3.empty(): false
+@end example
+
+@subheading plain 方法
+
+@code{plain() const} 返回去除所有样式和颜色代码的纯文本内容。
+
+@example
+Text text("Hello");
+text.colored(Color(ColorName::Red)).styled(StyleBuilder().bold());
+std::cout << "Plain: " << text.plain() << std::endl;
+@end example
+
+输出示例：
+@example
+Plain: Hello
+@end example
+
+@subheading render 方法
+
+@code{render() const} 返回带有 ANSI 转义序列的渲染文本，可直接输出到终端。
+
+@example
+Text text("Hello, TermTools!");
+text.colored(Color(ColorName::Green)).styled(StyleBuilder().bold());
+std::cout << text.render() << std::endl;
+@end example
+
+@subheading UTF-8 支持示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+int main() @{
+    Text chinese("中文测试");
+    chinese.colored(Color(ColorName::Cyan));
+    std::cout << "Chinese: " << chinese.render() << std::endl;
+    std::cout << "Width: " << chinese.width() << std::endl;
+    std::cout << "Length: " << chinese.length() << std::endl;
+    
+    std::cout << std::endl;
+    
+    Text mixed("Hello 你好 World 世界");
+    mixed.colored(Color(ColorName::Yellow));
+    std::cout << "Mixed: " << mixed.render() << std::endl;
+    std::cout << "Width: " << mixed.width() << std::endl;
+    std::cout << "Length: " << mixed.length() << std::endl;
+    
+    std::cout << std::endl;
+    
+    Text emoji("Test 测试 🎉");
+    emoji.colored(Color(255, 128, 64));
+    std::cout << "With emoji: " << emoji.render() << std::endl;
+    std::cout << "Width: " << emoji.width() << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subheading 宽度计算说明
+
+TermTools 使用内部工具函数 @code{measureTextWidth} 正确计算 UTF-8 字符的显示宽度：
+
+@itemize
+@item ASCII 字符宽度为 1
+@item 大多数 CJK（中日韩）字符宽度为 2
+@item 控制字符和 ANSI 转义序列宽度为 0
+@item Emoji 字符宽度根据终端支持情况计算
+@end itemize
+
+@xref{Utilities,,Utilities,utils,TermTools Utility Functions} 了解更多关于文本宽度计算的细节。
+
+@subheading 完整应用示例
+
+@example
+#include <iostream>
+#include "termtools.h"
+
+using namespace termtools;
+
+void printHeader(const std::string& title) @{
+    Text header(title);
+    header.justify(Justify::Center, 60)
+          .styled(StyleBuilder().bold().underline().color(Color(ColorName::Cyan)));
+    std::cout << header.render() << std::endl;
+    std::cout << std::endl;
+@}
+
+void printStatus(const std::string& label, const std::string& status, bool success) @{
+    Text line;
+    line.append(label)
+        .padRight(40, '.')
+        .append(status, success ? Color(ColorName::Green) : Color(ColorName::Red));
+    std::cout << line.render() << std::endl;
+@}
+
+int main() @{
+    printHeader("System Status Report");
+    
+    printStatus("CPU Usage", "OK", true);
+    printStatus("Memory Usage", "OK", true);
+    printStatus("Disk Space", "WARNING", false);
+    printStatus("Network", "OK", true);
+    
+    std::cout << std::endl;
+    
+    Text summary = Text::fromMarkup(
+        "[bold]Summary:[/bold] [green]3 passed[/green], [red]1 warning[/red]"
+    );
+    std::cout << summary.render() << std::endl;
+    
+    return 0;
+@}
+@end example

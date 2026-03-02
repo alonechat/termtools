@@ -1,0 +1,1081 @@
+@node Markdown
+@section Markdown 渲染
+@cindex Markdown 渲染
+@cindex 终端 Markdown
+
+TermTools 的 Markdown 渲染模块提供了在终端中渲染 Markdown 内容的能力。
+该模块支持完整的 Markdown 语法，包括标题、段落、列表、代码块、引用、链接等元素，
+并提供丰富的配置选项以自定义输出样式。
+
+@menu
+* Markdown 概述::              Markdown 类的主要接口。
+* MarkdownConfig 配置::        渲染配置选项。
+* MarkdownParser 解析器::      Markdown 解析器。
+* MarkdownRenderer 渲染器::    Markdown 渲染器。
+* Markdown 元素类型::          支持的 Markdown 元素。
+* MarkdownElement 结构::       元素数据结构。
+* 自定义主题示例::             自定义主题配置示例。
+* 内联元素处理::               内联元素的解析与渲染。
+@end menu
+
+@node Markdown 概述
+@subsection Markdown 概述
+@cindex Markdown 类
+
+@code{Markdown} 类是 Markdown 渲染模块的主要接口，提供了简洁的 API 来渲染 Markdown 内容。
+该类支持链式调用，可以方便地设置内容和配置。
+
+@subheading 类定义
+
+@code{Markdown} 类定义于头文件 @file{termtools/markdown/markdown.h} 中：
+
+@example
+#include <string>
+#include <memory>
+#include "termtools/markdown/markdown.h"
+
+namespace termtools @{
+class Markdown @{
+public:
+    Markdown();
+    explicit Markdown(const std::string& content);
+    Markdown(const std::string& content, const MarkdownConfig& config);
+    
+    Markdown& setContent(const std::string& content);
+    Markdown& setConfig(const MarkdownConfig& config);
+    
+    std::string render() const;
+    void print() const;
+    
+    std::shared_ptr<MarkdownElement> parse() const;
+    
+    static std::string render(const std::string& markdown);
+    static std::string render(const std::string& markdown, const MarkdownConfig& config);
+    static void print(const std::string& markdown);
+    static void print(const std::string& markdown, const MarkdownConfig& config);
+@};
+@}
+@end example
+
+@subheading 构造函数
+
+@table @code
+@item Markdown()
+默认构造函数。创建一个空的 Markdown 对象，使用默认配置。
+
+@example
+Markdown md;
+@end example
+
+@item Markdown(const std::string& content)
+使用指定的 Markdown 内容创建对象，使用默认配置。
+
+@example
+Markdown md("# Hello World\n\nThis is a paragraph.");
+@end example
+
+@item Markdown(const std::string& content, const MarkdownConfig& config)
+使用指定的 Markdown 内容和配置创建对象。
+
+@example
+MarkdownConfig config = MarkdownConfig::darkTheme();
+Markdown md("# Hello World", config);
+@end example
+@end table
+
+@subheading 成员方法
+
+@table @code
+@item Markdown& setContent(const std::string& content)
+设置 Markdown 内容。支持链式调用。
+
+@example
+Markdown md;
+md.setContent("# Title\n\nContent here.").render();
+@end example
+
+@item Markdown& setConfig(const MarkdownConfig& config)
+设置渲染配置。支持链式调用。
+
+@example
+Markdown md("# Title");
+md.setConfig(MarkdownConfig::colorfulTheme()).print();
+@end example
+
+@item std::string render() const
+渲染 Markdown 内容并返回格式化后的字符串。
+
+@example
+Markdown md("# Hello");
+std::string output = md.render();
+std::cout << output;
+@end example
+
+@item void print() const
+渲染并直接输出到标准输出。
+
+@example
+Markdown md("# Hello World");
+md.print();
+@end example
+
+@item std::shared_ptr<MarkdownElement> parse() const
+解析 Markdown 内容并返回元素树。可用于高级处理。
+
+@example
+Markdown md("# Hello");
+auto root = md.parse();
+// 遍历元素树
+@end example
+@end table
+
+@subheading 静态方法
+
+@table @code
+@item static std::string render(const std::string& markdown)
+静态方法，使用默认配置渲染 Markdown 字符串。
+
+@example
+std::string output = Markdown::render("# Quick Render");
+std::cout << output;
+@end example
+
+@item static std::string render(const std::string& markdown, const MarkdownConfig& config)
+静态方法，使用指定配置渲染 Markdown 字符串。
+
+@example
+std::string output = Markdown::render("# Title", MarkdownConfig::darkTheme());
+@end example
+
+@item static void print(const std::string& markdown)
+静态方法，使用默认配置渲染并输出 Markdown。
+
+@example
+Markdown::print("# Quick Print\n\nThis is fast!");
+@end example
+
+@item static void print(const std::string& markdown, const MarkdownConfig& config)
+静态方法，使用指定配置渲染并输出 Markdown。
+
+@example
+Markdown::print("# Dark Theme", MarkdownConfig::darkTheme());
+@end example
+@end table
+
+@subheading 完整使用示例
+
+@example
+#include "termtools.h"
+#include <iostream>
+
+using namespace termtools;
+
+int main() @{
+    std::string content = R"(# Project Documentation
+
+This is a **sample** document with *various* formatting.
+
+## Features
+
+- Easy to use
+- Customizable themes
+- Full Markdown support
+
+## Code Example
+
+```cpp
+int main() @{
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+@}
+```
+
+> Note: This is a blockquote.
+
+For more info, see [the docs](https://example.com).
+)";
+
+    Markdown::print(content);
+    
+    return 0;
+@}
+@end example
+
+@node MarkdownConfig 配置
+@subsection MarkdownConfig 配置
+@cindex MarkdownConfig
+@cindex 配置选项
+
+@code{MarkdownConfig} 类用于配置 Markdown 渲染的各种选项，包括颜色、样式和布局设置。
+所有配置方法都返回 @code{*this} 引用，支持链式调用。
+
+@subheading 类定义
+
+@example
+class MarkdownConfig @{
+public:
+    MarkdownConfig();
+    
+    // 颜色设置
+    MarkdownConfig& headingColor(const Color& color);
+    MarkdownConfig& codeColor(const Color& color);
+    MarkdownConfig& linkColor(const Color& color);
+    MarkdownConfig& quoteColor(const Color& color);
+    MarkdownConfig& listBulletColor(const Color& color);
+    MarkdownConfig& hrColor(const Color& color);
+    
+    // 样式设置
+    MarkdownConfig& headingBold(bool bold);
+    MarkdownConfig& codeBold(bool bold);
+    
+    // 布局设置
+    MarkdownConfig& indentSize(int size);
+    MarkdownConfig& quotePrefix(const std::string& prefix);
+    MarkdownConfig& bulletPoint(const std::string& bullet);
+    
+    // Getter 方法
+    const Color& getHeadingColor() const;
+    const Color& getCodeColor() const;
+    const Color& getLinkColor() const;
+    const Color& getQuoteColor() const;
+    const Color& getListBulletColor() const;
+    const Color& getHrColor() const;
+    
+    bool isHeadingBold() const;
+    bool isCodeBold() const;
+    
+    int getIndentSize() const;
+    const std::string& getQuotePrefix() const;
+    const std::string& getBulletPoint() const;
+    
+    // 预设主题
+    static MarkdownConfig defaultConfig();
+    static MarkdownConfig darkTheme();
+    static MarkdownConfig colorfulTheme();
+@};
+@end example
+
+@subheading 颜色设置
+
+@table @code
+@item MarkdownConfig& headingColor(const Color& color)
+设置标题颜色。默认为青色 (@code{ColorName::Cyan})。
+
+@example
+MarkdownConfig config;
+config.headingColor(Color(255, 100, 50));  // RGB 颜色
+// 或使用预设颜色
+config.headingColor(Color(ColorName::Magenta));
+@end example
+
+@item MarkdownConfig& codeColor(const Color& color)
+设置代码颜色（包括行内代码和代码块）。默认为黄色 (@code{ColorName::Yellow})。
+
+@example
+config.codeColor(Color(100, 255, 100));
+@end example
+
+@item MarkdownConfig& linkColor(const Color& color)
+设置链接颜色。默认为蓝色 (@code{ColorName::Blue})。
+
+@example
+config.linkColor(Color(100, 150, 255));
+@end example
+
+@item MarkdownConfig& quoteColor(const Color& color)
+设置引用块颜色。默认为绿色 (@code{ColorName::Green})。
+
+@example
+config.quoteColor(Color(150, 255, 150));
+@end example
+
+@item MarkdownConfig& listBulletColor(const Color& color)
+设置列表项目符号颜色。默认为洋红色 (@code{ColorName::Magenta})。
+
+@example
+config.listBulletColor(Color(255, 150, 255));
+@end example
+
+@item MarkdownConfig& hrColor(const Color& color)
+设置水平分割线颜色。默认为白色 (@code{ColorName::White})。
+
+@example
+config.hrColor(Color(200, 200, 200));
+@end example
+@end table
+
+@subheading 样式设置
+
+@table @code
+@item MarkdownConfig& headingBold(bool bold)
+设置标题是否加粗。默认为 @code{true}。
+
+@example
+config.headingBold(true);   // 标题加粗
+config.headingBold(false);  // 标题不加粗
+@end example
+
+@item MarkdownConfig& codeBold(bool bold)
+设置代码是否加粗。默认为 @code{false}。
+
+@example
+config.codeBold(true);  // 代码加粗显示
+@end example
+@end table
+
+@subheading 布局设置
+
+@table @code
+@item MarkdownConfig& indentSize(int size)
+设置缩进大小（空格数）。默认为 2。
+
+@example
+config.indentSize(4);  // 使用 4 空格缩进
+@end example
+
+@item MarkdownConfig& quotePrefix(const std::string& prefix)
+设置引用块前缀字符串。默认为 @code{"│ "}。
+
+@example
+config.quotePrefix("▎ ");  // 使用自定义前缀
+config.quotePrefix("> ");  // 传统 Markdown 风格
+@end example
+
+@item MarkdownConfig& bulletPoint(const std::string& bullet)
+设置无序列表的项目符号。默认为 @code{"•"}。
+
+@example
+config.bulletPoint("►");   // 箭头符号
+config.bulletPoint("→");   // 右箭头
+config.bulletPoint("*");   // 星号
+@end example
+@end table
+
+@subheading 预设主题
+
+@table @code
+@item static MarkdownConfig defaultConfig()
+返回默认配置。
+
+@example
+MarkdownConfig config = MarkdownConfig::defaultConfig();
+@end example
+
+默认配置值：
+@example
+headingColor:      Cyan
+codeColor:         Yellow
+linkColor:         Blue
+quoteColor:        Green
+listBulletColor:   Magenta
+hrColor:           White
+headingBold:       true
+codeBold:          false
+indentSize:        2
+quotePrefix:       "│ "
+bulletPoint:       "•"
+@end example
+
+@item static MarkdownConfig darkTheme()
+返回深色主题配置，适合深色终端背景。
+
+@example
+MarkdownConfig config = MarkdownConfig::darkTheme();
+Markdown::print("# Dark Theme", config);
+@end example
+
+深色主题颜色：
+@example
+headingColor:      RGB(100, 200, 255)  // 浅蓝
+codeColor:         RGB(255, 200, 100)  // 金色
+linkColor:         RGB(100, 150, 255)  // 蓝色
+quoteColor:        RGB(150, 255, 150)  // 浅绿
+listBulletColor:   RGB(255, 150, 255)  // 粉色
+hrColor:           RGB(200, 200, 200)  // 浅灰
+@end example
+
+@item static MarkdownConfig colorfulTheme()
+返回彩色主题配置，使用鲜艳的颜色。
+
+@example
+MarkdownConfig config = MarkdownConfig::colorfulTheme();
+Markdown::print("# Colorful!", config);
+@end example
+
+彩色主题颜色：
+@example
+headingColor:      RGB(255, 100, 100)  // 红色
+codeColor:         RGB(100, 255, 100)  // 绿色
+linkColor:         RGB(100, 100, 255)  // 蓝色
+quoteColor:        RGB(255, 255, 100)  // 黄色
+listBulletColor:   RGB(255, 100, 255)  // 紫色
+hrColor:           RGB(100, 255, 255)  // 青色
+@end example
+@end table
+
+@node MarkdownParser 解析器
+@subsection MarkdownParser 解析器
+@cindex MarkdownParser
+@cindex 解析器
+
+@code{MarkdownParser} 类负责将 Markdown 文本解析为元素树结构。
+通常不需要直接使用此类，@code{Markdown} 类会自动调用解析器。
+
+@subheading 类定义
+
+@example
+class MarkdownParser @{
+public:
+    MarkdownParser();
+    explicit MarkdownParser(const MarkdownConfig& config);
+    
+    std::shared_ptr<MarkdownElement> parse(const std::string& markdown);
+    std::vector<std::shared_ptr<MarkdownElement>> parseLines(std::vector<std::string>& lines);
+@};
+@end example
+
+@subheading 构造函数
+
+@table @code
+@item MarkdownParser()
+使用默认配置创建解析器。
+
+@example
+MarkdownParser parser;
+@end example
+
+@item MarkdownParser(const MarkdownConfig& config)
+使用指定配置创建解析器。
+
+@example
+MarkdownConfig config = MarkdownConfig::darkTheme();
+MarkdownParser parser(config);
+@end example
+@end table
+
+@subheading 解析方法
+
+@table @code
+@item std::shared_ptr<MarkdownElement> parse(const std::string& markdown)
+解析 Markdown 字符串，返回根元素。根元素包含所有子元素。
+
+@example
+MarkdownParser parser;
+std::string md = "# Title\n\nParagraph";
+auto root = parser.parse(md);
+
+// 遍历子元素
+for (const auto& child : root->children) @{
+    // 处理每个元素
+@}
+@end example
+
+@item std::vector<std::shared_ptr<MarkdownElement>> parseLines(std::vector<std::string>& lines)
+解析字符串数组，返回元素列表。
+
+@example
+MarkdownParser parser;
+std::vector<std::string> lines = @{
+    "# Heading",
+    "",
+    "Paragraph text"
+@};
+
+auto elements = parser.parseLines(lines);
+for (const auto& elem : elements) @{
+    // 处理每个元素
+@}
+@end example
+@end table
+
+@node MarkdownRenderer 渲染器
+@subsection MarkdownRenderer 渲染器
+@cindex MarkdownRenderer
+@cindex 渲染器
+
+@code{MarkdownRenderer} 类负责将 Markdown 元素树渲染为带 ANSI 转义序列的字符串。
+通常不需要直接使用此类，@code{Markdown} 类会自动调用渲染器。
+
+@subheading 类定义
+
+@example
+class MarkdownRenderer @{
+public:
+    MarkdownRenderer();
+    explicit MarkdownRenderer(const MarkdownConfig& config);
+    
+    std::string render(const std::string& markdown);
+    std::string render(const std::shared_ptr<MarkdownElement>& element);
+    std::string render(const std::vector<std::shared_ptr<MarkdownElement>>& elements);
+    
+    void print(const std::string& markdown);
+    void print(const std::shared_ptr<MarkdownElement>& element);
+    void print(const std::vector<std::shared_ptr<MarkdownElement>>& elements);
+    
+    MarkdownConfig& config();
+    const MarkdownConfig& config() const;
+@};
+@end example
+
+@subheading 构造函数
+
+@table @code
+@item MarkdownRenderer()
+使用默认配置创建渲染器。
+
+@example
+MarkdownRenderer renderer;
+@end example
+
+@item MarkdownRenderer(const MarkdownConfig& config)
+使用指定配置创建渲染器。
+
+@example
+MarkdownRenderer renderer(MarkdownConfig::darkTheme());
+@end example
+@end table
+
+@subheading 渲染方法
+
+@table @code
+@item std::string render(const std::string& markdown)
+渲染 Markdown 字符串，返回格式化后的字符串。
+
+@example
+MarkdownRenderer renderer;
+std::string output = renderer.render("# Hello\n\nWorld");
+std::cout << output;
+@end example
+
+@item std::string render(const std::shared_ptr<MarkdownElement>& element)
+渲染单个 Markdown 元素。
+
+@example
+MarkdownParser parser;
+auto root = parser.parse("# Title");
+MarkdownRenderer renderer;
+std::string output = renderer.render(root);
+@end example
+
+@item std::string render(const std::vector<std::shared_ptr<MarkdownElement>>& elements)
+渲染元素列表。
+
+@example
+MarkdownParser parser;
+std::vector<std::string> lines = @{ "# A", "# B" @};
+auto elements = parser.parseLines(lines);
+MarkdownRenderer renderer;
+std::string output = renderer.render(elements);
+@end example
+@end table
+
+@subheading 输出方法
+
+@table @code
+@item void print(const std::string& markdown)
+渲染并输出 Markdown 字符串到标准输出。
+
+@example
+MarkdownRenderer renderer;
+renderer.print("# Quick Output");
+@end example
+
+@item void print(const std::shared_ptr<MarkdownElement>& element)
+渲染并输出单个元素。
+
+@example
+renderer.print(element);
+@end example
+
+@item void print(const std::vector<std::shared_ptr<MarkdownElement>>& elements)
+渲染并输出元素列表。
+
+@example
+renderer.print(elements);
+@end example
+@end table
+
+@subheading 配置访问
+
+@table @code
+@item MarkdownConfig& config()
+返回可修改的配置引用。
+
+@example
+MarkdownRenderer renderer;
+renderer.config().headingColor(Color(255, 0, 0));
+@end example
+
+@item const MarkdownConfig& config() const
+返回只读的配置引用。
+
+@example
+const MarkdownRenderer renderer;
+auto& config = renderer.config();
+@end example
+@end table
+
+@node Markdown 元素类型
+@subsection Markdown 元素类型
+@cindex MarkdownElementType
+@cindex 元素类型
+
+@code{MarkdownElementType} 枚举定义了所有支持的 Markdown 元素类型。
+
+@subheading 枚举定义
+
+@example
+enum class MarkdownElementType @{
+    Heading1,       // 一级标题
+    Heading2,       // 二级标题
+    Heading3,       // 三级标题
+    Heading4,       // 四级标题
+    Heading5,       // 五级标题
+    Heading6,       // 六级标题
+    Paragraph,      // 段落
+    Bold,           // 粗体文本
+    Italic,         // 斜体文本
+    BoldItalic,     // 粗斜体文本
+    Strikethrough,  // 删除线文本
+    Code,           // 行内代码
+    CodeBlock,      // 代码块
+    Blockquote,     // 引用块
+    UnorderedList,  // 无序列表
+    OrderedList,    // 有序列表
+    ListItem,       // 列表项
+    HorizontalRule, // 水平分割线
+    Link,           // 链接
+    Image,          // 图片
+    Text            // 纯文本
+@};
+@end example
+
+@subheading 块级元素
+
+@table @code
+@item Heading1 - Heading6
+标题元素，对应 Markdown 的 @code{#} 到 @code{######} 语法。
+
+@example
+# Heading 1      -> MarkdownElementType::Heading1
+## Heading 2     -> MarkdownElementType::Heading2
+### Heading 3    -> MarkdownElementType::Heading3
+#### Heading 4   -> MarkdownElementType::Heading4
+##### Heading 5  -> MarkdownElementType::Heading5
+###### Heading 6 -> MarkdownElementType::Heading6
+@end example
+
+@item Paragraph
+段落元素，包含普通文本和内联元素。
+
+@example
+This is a paragraph with **bold** text.
+@end example
+
+@item CodeBlock
+代码块元素，支持语法高亮标记。
+
+@example
+```cpp
+int main() @{
+    return 0;
+@}
+```
+@end example
+
+@item Blockquote
+引用块元素。
+
+@example
+> This is a blockquote.
+> It can span multiple lines.
+@end example
+
+@item UnorderedList / OrderedList / ListItem
+列表元素。无序列表使用 @code{-}、@code{*} 或 @code{+}，有序列表使用数字加点。
+
+@example
+- Item 1     -> ListItem (unordered)
+- Item 2     -> ListItem (unordered)
+1. First     -> ListItem (ordered)
+2. Second    -> ListItem (ordered)
+@end example
+
+@item HorizontalRule
+水平分割线元素，使用 @code{---}、@code{***} 或 @code{___}。
+
+@example
+---
+***
+___
+@end example
+@end table
+
+@subheading 内联元素
+
+@table @code
+@item Bold
+粗体文本，使用 @code{**} 或 @code{__} 包裹。
+
+@example
+**bold text**  -> MarkdownElementType::Bold
+__bold text__  -> MarkdownElementType::Bold
+@end example
+
+@item Italic
+斜体文本，使用 @code{*} 或 @code{_} 包裹。
+
+@example
+*italic text*  -> MarkdownElementType::Italic
+_italic text_  -> MarkdownElementType::Italic
+@end example
+
+@item BoldItalic
+粗斜体文本，使用 @code{***} 或 @code{___} 包裹。
+
+@example
+***bold italic***  -> MarkdownElementType::BoldItalic
+___bold italic___  -> MarkdownElementType::BoldItalic
+@end example
+
+@item Strikethrough
+删除线文本，使用 @code{~~} 包裹。
+
+@example
+~~strikethrough~~  -> MarkdownElementType::Strikethrough
+@end example
+
+@item Code
+行内代码，使用反引号包裹。
+
+@example
+`inline code`  -> MarkdownElementType::Code
+@end example
+
+@item Link
+链接元素，使用 @code{[text](url)} 语法。
+
+@example
+[Link Text](https://example.com)  -> MarkdownElementType::Link
+@end example
+
+@item Image
+图片元素，使用 @code{![alt](url)} 语法。
+
+@example
+![Alt Text](image.png)  -> MarkdownElementType::Image
+@end example
+
+@item Text
+纯文本元素，不包含任何格式。
+@end table
+
+@node MarkdownElement 结构
+@subsection MarkdownElement 结构
+@cindex MarkdownElement
+@cindex 元素结构
+
+@code{MarkdownElement} 结构体表示解析后的 Markdown 元素，包含元素类型、内容和子元素。
+
+@subheading 结构定义
+
+@example
+struct MarkdownElement @{
+    MarkdownElementType type;           // 元素类型
+    std::string content;                // 元素内容
+    std::vector<std::shared_ptr<MarkdownElement>> children;  // 子元素
+    std::string url;                    // 链接/图片的 URL
+    std::string language;               // 代码块的语言
+    int level = 0;                      // 标题级别 (1-6)
+    bool ordered = false;               // 列表项是否为有序
+@};
+@end example
+
+@subheading 成员说明
+
+@table @code
+@item MarkdownElementType type
+元素的类型，用于确定如何渲染该元素。
+
+@item std::string content
+元素的文本内容。对于包含内联元素的块级元素，此字段存储原始文本。
+
+@item std::vector<std::shared_ptr<MarkdownElement>> children
+子元素列表。例如，段落元素可能包含 Text、Bold、Italic 等子元素。
+
+@item std::string url
+链接或图片的 URL。仅对 @code{Link} 和 @code{Image} 类型有效。
+
+@item std::string language
+代码块的编程语言标识。仅对 @code{CodeBlock} 类型有效。
+
+@item int level
+标题级别，范围 1-6。仅对标题类型有效。
+
+@item bool ordered
+列表项是否为有序列表。仅对 @code{ListItem} 类型有效。
+@end table
+
+@subheading 使用示例
+
+@example
+MarkdownParser parser;
+auto root = parser.parse("# Hello **World**");
+
+// root->type == MarkdownElementType::Paragraph (根元素)
+// root->children[0]->type == MarkdownElementType::Heading1
+// root->children[0]->content == "Hello **World**"
+// root->children[0]->level == 1
+// root->children[0]->children 包含 Text 和 Bold 子元素
+
+for (const auto& child : root->children) @{
+    if (child->type == MarkdownElementType::Heading1) @{
+        std::cout << "Found H1: " << child->content << std::endl;
+        for (const auto& inlineElem : child->children) @{
+            if (inlineElem->type == MarkdownElementType::Bold) @{
+                std::cout << "Bold text: " << inlineElem->content << std::endl;
+            @}
+        @}
+    @}
+@}
+@end example
+
+@node 自定义主题示例
+@subsection 自定义主题示例
+@cindex 自定义主题
+@cindex 主题配置
+
+本节展示如何创建自定义的 Markdown 渲染主题。
+
+@subheading 示例 1：企业主题
+
+@example
+MarkdownConfig createCorporateTheme() @{
+    MarkdownConfig config;
+    config.headingColor(Color(0, 102, 204))      // 企业蓝
+          .codeColor(Color(64, 64, 64))          // 深灰
+          .linkColor(Color(0, 128, 255))         // 亮蓝
+          .quoteColor(Color(128, 128, 128))      // 灰色
+          .listBulletColor(Color(0, 102, 204))   // 企业蓝
+          .hrColor(Color(200, 200, 200))         // 浅灰
+          .headingBold(true)
+          .bulletPoint("•")
+          .quotePrefix("│ ")
+          .indentSize(2);
+    return config;
+@}
+
+// 使用
+MarkdownConfig corporate = createCorporateTheme();
+Markdown::print("# Corporate Document", corporate);
+@end example
+
+@subheading 示例 2：高对比度主题
+
+@example
+MarkdownConfig createHighContrastTheme() @{
+    MarkdownConfig config;
+    config.headingColor(Color(255, 255, 0))      // 黄色
+          .codeColor(Color(0, 255, 255))         // 青色
+          .linkColor(Color(0, 255, 0))           // 绿色
+          .quoteColor(Color(255, 128, 0))        // 橙色
+          .listBulletColor(Color(255, 0, 255))   // 紫色
+          .hrColor(Color(255, 255, 255))         // 白色
+          .headingBold(true)
+          .codeBold(true)
+          .bulletPoint("►")
+          .quotePrefix("┃ ");
+    return config;
+@}
+@end example
+
+@subheading 示例 3：极简主题
+
+@example
+MarkdownConfig createMinimalTheme() @{
+    MarkdownConfig config;
+    config.headingColor(Color(255, 255, 255))    // 白色
+          .codeColor(Color(200, 200, 200))       // 浅灰
+          .linkColor(Color(150, 150, 150))       // 灰色
+          .quoteColor(Color(180, 180, 180))      // 浅灰
+          .listBulletColor(Color(255, 255, 255)) // 白色
+          .hrColor(Color(100, 100, 100))         // 深灰
+          .headingBold(false)
+          .bulletPoint("-")
+          .quotePrefix("  ")
+          .indentSize(4);
+    return config;
+@}
+@end example
+
+@subheading 示例 4：使用预设颜色
+
+@example
+MarkdownConfig createPresetTheme() @{
+    MarkdownConfig config;
+    config.headingColor(Color(ColorName::BrightCyan))
+          .codeColor(Color(ColorName::BrightYellow))
+          .linkColor(Color(ColorName::BrightBlue))
+          .quoteColor(Color(ColorName::BrightGreen))
+          .listBulletColor(Color(ColorName::BrightMagenta))
+          .hrColor(Color(ColorName::BrightWhite));
+    return config;
+@}
+@end example
+
+@subheading 示例 5：动态主题切换
+
+@example
+void renderWithTheme(const std::string& markdown, const std::string& themeName) @{
+    MarkdownConfig config;
+    
+    if (themeName == "dark") @{
+        config = MarkdownConfig::darkTheme();
+    @} else if (themeName == "colorful") @{
+        config = MarkdownConfig::colorfulTheme();
+    @} else if (themeName == "custom") @{
+        config.headingColor(Color(255, 100, 50))
+              .codeColor(Color(100, 255, 100))
+              .linkColor(Color(100, 200, 255))
+              .quoteColor(Color(200, 200, 100))
+              .listBulletColor(Color(255, 100, 200))
+              .bulletPoint("►")
+              .quotePrefix("▎ ");
+    @} else @{
+        config = MarkdownConfig::defaultConfig();
+    @}
+    
+    Markdown::print(markdown, config);
+@}
+@end example
+
+@node 内联元素处理
+@subsection 内联元素处理
+@cindex 内联元素
+@cindex 内联解析
+
+TermTools 的 Markdown 解析器会自动识别和处理内联元素。
+内联元素可以出现在段落、标题、引用块和列表项中。
+
+@subheading 支持的内联元素
+
+@table @asis
+@item 粗体
+使用 @code{**text**} 或 @code{__text__}
+
+@item 斜体
+使用 @code{*text*} 或 @code{_text_}
+
+@item 粗斜体
+使用 @code{***text***} 或 @code{___text___}
+
+@item 删除线
+使用 @code{~~text~~}
+
+@item 行内代码
+使用 @code{`code`}
+
+@item 链接
+使用 @code{[text](url)}
+@end table
+
+@subheading 解析流程
+
+解析器按以下顺序检测内联元素：
+
+@enumerate
+@item 检测 @code{*} 或 @code{_} 定界符（粗体、斜体、粗斜体）
+@item 检测 @code{~~} 定界符（删除线）
+@item 检测反引号（行内代码）
+@item 检测方括号（链接）
+@item 剩余文本作为纯文本
+@end enumerate
+
+@subheading 内联元素嵌套
+
+内联元素可以相互嵌套，解析器会正确处理嵌套关系：
+
+@example
+std::string md = "This is **bold with *italic* inside** text.";
+Markdown::print(md);
+@end example
+
+@subheading 完整内联元素示例
+
+@example
+#include "termtools.h"
+#include <iostream>
+
+using namespace termtools;
+
+int main() @{
+    std::string markdown = R"(# Inline Elements Demo
+
+This paragraph demonstrates **bold**, *italic*, and ***bold italic*** text.
+
+You can also use ~~strikethrough~~ and `inline code`.
+
+Links are supported: [Visit Example](https://example.com)
+
+## Combined in Heading
+
+### **Bold** and *Italic* in H3
+
+> Quote with **bold** and `code`
+
+- List item with **bold**
+- List item with [link](https://example.com)
+- List item with `code`
+)";
+
+    MarkdownConfig config;
+    config.headingColor(Color(255, 200, 100))
+          .codeColor(Color(100, 255, 100))
+          .linkColor(Color(100, 200, 255))
+          .quoteColor(Color(200, 200, 100))
+          .listBulletColor(Color(255, 100, 200));
+    
+    Markdown md(markdown, config);
+    md.print();
+    
+    return 0;
+@}
+@end example
+
+@subheading 访问内联元素
+
+可以通过解析后的元素树访问内联元素：
+
+@example
+MarkdownParser parser;
+auto root = parser.parse("Text with **bold** and *italic*");
+
+for (const auto& block : root->children) @{
+    if (block->type == MarkdownElementType::Paragraph) @{
+        for (const auto& inlineElem : block->children) @{
+            switch (inlineElem->type) @{
+                case MarkdownElementType::Text:
+                    std::cout << "Text: " << inlineElem->content << std::endl;
+                    break;
+                case MarkdownElementType::Bold:
+                    std::cout << "Bold: " << inlineElem->content << std::endl;
+                    break;
+                case MarkdownElementType::Italic:
+                    std::cout << "Italic: " << inlineElem->content << std::endl;
+                    break;
+                default:
+                    break;
+            @}
+        @}
+    @}
+@}
+@end example
+
+@subheading 注意事项
+
+@itemize
+@item 内联元素不能跨行
+@item 未闭合的定界符会被视为普通文本
+@item 链接文本中可以包含内联元素
+@item 代码元素内的内容不会被进一步解析
+@end itemize

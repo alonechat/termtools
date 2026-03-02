@@ -1,0 +1,1839 @@
+\input texinfo
+@c -*-texinfo-*-
+@c %**start of header
+@setfilename ui-components.info
+@settitle TermTools UI Components Reference Manual
+@setchapternewpage odd
+@c %**end of header
+
+@copying
+本手册文档了 TermTools UI 组件库。
+
+Copyright @copyright{} 2024 TermTools Authors.
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation.
+@end quotation
+@end copying
+
+@titlepage
+@title TermTools UI Components
+@subtitle 终端用户界面组件参考手册
+@author TermTools Development Team
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top TermTools UI Components
+
+本手册详细介绍了 TermTools 库提供的用户界面组件。
+@end ifnottex
+
+@menu
+* 概述::                        TermTools UI 组件库简介
+* Panel 组件::                  面板组件
+* Divider 组件::                分隔线组件
+* Heading 组件::                标题组件
+* List 组件::                   列表组件
+* Quote 组件::                  引用组件
+* CodeBlock 组件::              代码块组件
+* InlineCode 组件::             行内代码组件
+* Columns 组件::                多列布局组件
+* Group 组件::                  分组容器组件
+* Table 组件::                  表格组件
+* 辅助类::                      Color、StyleBuilder 和 Text 类
+* 索引::                        函数和类索引
+@end menu
+
+@node 概述
+@chapter 概述
+
+TermTools UI 组件库提供了一套丰富的终端用户界面组件，
+用于创建美观、结构化的命令行应用程序输出。
+所有组件都支持链式调用，便于灵活配置。
+
+@menu
+* 设计理念::
+* 快速开始::
+@end menu
+
+@node 设计理念
+@section 设计理念
+
+TermTools UI 组件遵循以下设计原则：
+
+@itemize @bullet
+@item
+@strong{链式调用}：所有设置方法返回对象引用，支持流畅的链式配置。
+@item
+@strong{渲染与输出分离}：组件提供 @code{render()} 方法生成字符串，
+@code{print()} 方法直接输出到终端。
+@item
+@strong{颜色支持}：全面支持 16 色、256 色和真彩色（RGB）。
+@item
+@strong{Unicode 支持}：支持 Unicode 边框字符和符号。
+@end itemize
+
+@node 快速开始
+@section 快速开始
+
+使用 TermTools UI 组件需要包含相应的头文件：
+
+@example
+@group
+#include <termtools/ui/panel.h>
+#include <termtools/ui/divider.h>
+#include <termtools/ui/heading.h>
+#include <termtools/ui/list.h>
+#include <termtools/ui/quote.h>
+#include <termtools/ui/codeblock.h>
+#include <termtools/ui/columns.h>
+#include <termtools/ui/group.h>
+#include <termtools/ui/table.h>
+@end group
+@end example
+
+@node Panel 组件
+@chapter Panel 组件
+
+Panel 组件用于创建带边框的面板容器，可以包含标题和内容。
+
+@menu
+* Panel 类定义::
+* Panel 构造函数::
+* Panel 方法::
+* Panel 使用示例::
+@end menu
+
+@node Panel 类定义
+@section Panel 类定义
+
+Panel 类定义在头文件 @file{termtools/ui/panel.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Panel @{
+public:
+    Panel(const std::string &title, const Text &content);
+    Panel(const std::string &title, const std::string &content);
+
+    Panel &setBorderStyle(const StyleBuilder &style);
+    Panel &setTitleColor(const Color &color);
+    Panel &setPadding(int padding);
+    Panel &setExpand(bool expand);
+    Panel &setWidth(int width);
+
+    std::string render() const;
+    void print(Console &console) const;
+@};
+
+@}
+@end group
+@end example
+
+@node Panel 构造函数
+@section Panel 构造函数
+
+@deftypefn Constructor Panel @{@} (const std::string &@var{title}, const Text &@var{content})
+创建一个带有指定标题和 Text 内容的 Panel 对象。
+@var{title} 为面板标题字符串，@var{content} 为 Text 对象。
+@end deftypefn
+
+@deftypefn Constructor Panel @{@} (const std::string &@var{title}, const std::string &@var{content})
+创建一个带有指定标题和字符串内容的 Panel 对象。
+@var{title} 为面板标题字符串，@var{content} 为内容字符串。
+@end deftypefn
+
+@node Panel 方法
+@section Panel 方法
+
+@deftypefn Method Panel &Panel::setBorderStyle @{@} (const StyleBuilder &@var{style})
+设置面板边框样式。@var{style} 为 StyleBuilder 对象，
+可用于设置边框颜色、粗体等样式。返回对象引用以支持链式调用。
+@end deftypefn
+
+@deftypefn Method Panel &Panel::setTitleColor @{@} (const Color &@var{color})
+设置标题颜色。@var{color} 为 Color 对象，支持命名颜色、RGB 颜色或 256 色索引。
+@end deftypefn
+
+@deftypefn Method Panel &Panel::setPadding @{@} (int @var{padding})
+设置面板内边距。@var{padding} 为内边距字符数，默认值为 1。
+@end deftypefn
+
+@deftypefn Method Panel &Panel::setExpand @{@} (bool @var{expand})
+设置是否扩展面板宽度至终端宽度。@var{expand} 为 true 时自动扩展。
+@end deftypefn
+
+@deftypefn Method Panel &Panel::setWidth @{@} (int @var{width})
+设置面板固定宽度。@var{width} 为面板宽度字符数。
+@end deftypefn
+
+@deftypefn Method std::string Panel::render @{@} () const
+渲染面板并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Panel::print @{@} (Console &@var{console}) const
+将面板输出到指定的 Console 对象。@var{console} 为 Console 输出流对象。
+@end deftypefn
+
+@node Panel 使用示例
+@section Panel 使用示例
+
+@example
+@group
+#include <termtools/ui/panel.h>
+#include <termtools/core/console.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Panel panel("系统信息", "欢迎使用 TermTools 库");
+    panel.setTitleColor(Color(ColorName::Cyan))
+         .setPadding(2)
+         .setExpand(true);
+    
+    panel.print(console);
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Divider 组件
+@chapter Divider 组件
+
+Divider 组件用于创建水平分隔线，支持多种样式。
+
+@menu
+* DividerStyle 枚举::
+* Divider 类定义::
+* Divider 构造函数::
+* Divider 方法::
+* Divider 使用示例::
+@end menu
+
+@node DividerStyle 枚举
+@section DividerStyle 枚举
+
+DividerStyle 枚举定义了分隔线的样式类型：
+
+@example
+@group
+enum class DividerStyle : uint8_t @{
+    Solid,      // 实线
+    Dashed,     // 虚线
+    Dotted,     // 点线
+    Double,     // 双线
+    Thick       // 粗线
+@};
+@end group
+@end example
+
+@node Divider 类定义
+@section Divider 类定义
+
+Divider 类定义在头文件 @file{termtools/ui/divider.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Divider @{
+public:
+    Divider();
+    explicit Divider(int width);
+
+    Divider &setWidth(int width);
+    Divider &setColor(const Color &color);
+    Divider &setDim(bool dim = true);
+    Divider &setStyle(DividerStyle style);
+    Divider &setChar(const std::string &c);
+
+    int getWidth() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(int width, const Color &color, DividerStyle style);
+    static void print(int width, const Color &color, DividerStyle style);
+@};
+
+@}
+@end group
+@end example
+
+@node Divider 构造函数
+@section Divider 构造函数
+
+@deftypefn Constructor Divider @{@} ()
+创建默认宽度的分隔线对象。默认宽度为终端宽度。
+@end deftypefn
+
+@deftypefn Constructor Divider @{@} (int @var{width})
+创建指定宽度的分隔线对象。@var{width} 为分隔线宽度字符数。
+@end deftypefn
+
+@node Divider 方法
+@section Divider 方法
+
+@deftypefn Method Divider &Divider::setWidth @{@} (int @var{width})
+设置分隔线宽度。@var{width} 为宽度字符数。
+@end deftypefn
+
+@deftypefn Method Divider &Divider::setColor @{@} (const Color &@var{color})
+设置分隔线颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method Divider &Divider::setDim @{@} (bool @var{dim} = true)
+设置是否使用暗淡效果。@var{dim} 为 true 时显示暗淡效果。
+@end deftypefn
+
+@deftypefn Method Divider &Divider::setStyle @{@} (DividerStyle @var{style})
+设置分隔线样式。@var{style} 为 DividerStyle 枚举值。
+@end deftypefn
+
+@deftypefn Method Divider &Divider::setChar @{@} (const std::string &@var{c})
+设置自定义分隔字符。使用此方法将覆盖预设样式。
+@var{c} 为自定义字符字符串。
+@end deftypefn
+
+@deftypefn Method int Divider::getWidth @{@} () const
+获取分隔线宽度。
+@end deftypefn
+
+@deftypefn Method std::string Divider::render @{@} () const
+渲染分隔线并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Divider::print @{@} () const
+将分隔线输出到标准输出。
+@end deftypefn
+
+@deftypefn Method static std::string Divider::render @{@} (int @var{width}, const Color &@var{color}, DividerStyle @var{style})
+静态方法，渲染分隔线并返回字符串。
+@end deftypefn
+
+@deftypefn Method static void Divider::print @{@} (int @var{width}, const Color &@var{color}, DividerStyle @var{style})
+静态方法，直接输出分隔线。
+@end deftypefn
+
+@node Divider 使用示例
+@section Divider 使用示例
+
+@example
+@group
+#include <termtools/ui/divider.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Divider divider;
+    divider.setStyle(DividerStyle::Double)
+           .setColor(Color(ColorName::Cyan))
+           .setWidth(60);
+    divider.print();
+    
+    Divider::print(40, Color(ColorName::Yellow), DividerStyle::Dashed);
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Heading 组件
+@chapter Heading 组件
+
+Heading 组件用于创建格式化的标题，支持六个级别。
+
+@menu
+* HeadingLevel 枚举::
+* Heading 类定义::
+* Heading 构造函数::
+* Heading 方法::
+* Heading 使用示例::
+@end menu
+
+@node HeadingLevel 枚举
+@section HeadingLevel 枚举
+
+HeadingLevel 枚举定义了标题的级别：
+
+@example
+@group
+enum class HeadingLevel : uint8_t @{
+    H1 = 1,  // 一级标题
+    H2 = 2,  // 二级标题
+    H3 = 3,  // 三级标题
+    H4 = 4,  // 四级标题
+    H5 = 5,  // 五级标题
+    H6 = 6   // 六级标题
+@};
+@end group
+@end example
+
+@node Heading 类定义
+@section Heading 类定义
+
+Heading 类定义在头文件 @file{termtools/ui/heading.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Heading @{
+public:
+    Heading();
+    Heading(HeadingLevel level, const std::string &text);
+    Heading(HeadingLevel level, const Text &text);
+
+    Heading &setLevel(HeadingLevel level);
+    Heading &setText(const std::string &text);
+    Heading &setText(const Text &text);
+    Heading &setColor(const Color &color);
+    Heading &setBold(bool bold = true);
+    Heading &setPrefix(const std::string &prefix);
+    Heading &setStyle(const StyleBuilder &style);
+
+    HeadingLevel getLevel() const;
+    std::string getText() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(HeadingLevel level, const std::string &text,
+                               const Color &color = Color(ColorName::Cyan));
+    static void print(HeadingLevel level, const std::string &text,
+                      const Color &color = Color(ColorName::Cyan));
+@};
+
+@}
+@end group
+@end example
+
+@node Heading 构造函数
+@section Heading 构造函数
+
+@deftypefn Constructor Heading @{@} ()
+创建默认的 Heading 对象。需要后续设置级别和文本。
+@end deftypefn
+
+@deftypefn Constructor Heading @{@} (HeadingLevel @var{level}, const std::string &@var{text})
+创建指定级别和文本的 Heading 对象。
+@var{level} 为标题级别，@var{text} 为标题文本。
+@end deftypefn
+
+@deftypefn Constructor Heading @{@} (HeadingLevel @var{level}, const Text &@var{text})
+创建指定级别和 Text 内容的 Heading 对象。
+@var{level} 为标题级别，@var{text} 为 Text 对象。
+@end deftypefn
+
+@node Heading 方法
+@section Heading 方法
+
+@deftypefn Method Heading &Heading::setLevel @{@} (HeadingLevel @var{level})
+设置标题级别。@var{level} 为 HeadingLevel 枚举值。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setText @{@} (const std::string &@var{text})
+设置标题文本。@var{text} 为标题字符串。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setText @{@} (const Text &@var{text})
+设置标题文本。@var{text} 为 Text 对象。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setColor @{@} (const Color &@var{color})
+设置标题颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setBold @{@} (bool @var{bold} = true)
+设置是否加粗。@var{bold} 为 true 时标题加粗显示。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setPrefix @{@} (const std::string &@var{prefix})
+设置自定义前缀。@var{prefix} 为前缀字符串，将覆盖默认前缀。
+@end deftypefn
+
+@deftypefn Method Heading &Heading::setStyle @{@} (const StyleBuilder &@var{style})
+设置标题样式。@var{style} 为 StyleBuilder 对象。
+@end deftypefn
+
+@deftypefn Method HeadingLevel Heading::getLevel @{@} () const
+获取标题级别。
+@end deftypefn
+
+@deftypefn Method std::string Heading::getText @{@} () const
+获取标题文本。
+@end deftypefn
+
+@deftypefn Method std::string Heading::render @{@} () const
+渲染标题并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Heading::print @{@} () const
+将标题输出到标准输出。
+@end deftypefn
+
+@node Heading 使用示例
+@section Heading 使用示例
+
+@example
+@group
+#include <termtools/ui/heading.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Heading h1(HeadingLevel::H1, "主标题");
+    h1.setColor(Color(ColorName::Cyan))
+      .setBold(true);
+    h1.print();
+
+    Heading h2(HeadingLevel::H2, "副标题");
+    h2.setColor(Color(ColorName::Yellow))
+      .print();
+    
+    Heading::print(HeadingLevel::H3, "快速标题", Color(ColorName::Green));
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node List 组件
+@chapter List 组件
+
+List 组件用于创建有序或无序列表。
+
+@menu
+* ListType 枚举::
+* ListItem 类::
+* List 类定义::
+* List 构造函数::
+* List 方法::
+* List 使用示例::
+@end menu
+
+@node ListType 枚举
+@section ListType 枚举
+
+ListType 枚举定义了列表的类型：
+
+@example
+@group
+enum class ListType : uint8_t @{
+    Unordered,  // 无序列表
+    Ordered     // 有序列表
+@};
+@end group
+@end example
+
+@node ListItem 类
+@section ListItem 类
+
+ListItem 类表示列表中的单个项目：
+
+@example
+@group
+class ListItem @{
+public:
+    ListItem();
+    explicit ListItem(const std::string &text);
+    ListItem(const std::string &text, const StyleBuilder &style);
+
+    ListItem &setText(const std::string &text);
+    ListItem &setStyle(const StyleBuilder &style);
+    ListItem &setIndent(int indent);
+
+    std::string getText() const;
+    int getIndent() const;
+@};
+@end group
+@end example
+
+@deftypefn Constructor ListItem @{@} ()
+创建空的 ListItem 对象。
+@end deftypefn
+
+@deftypefn Constructor ListItem @{@} (const std::string &@var{text})
+创建指定文本的 ListItem 对象。@var{text} 为项目文本。
+@end deftypefn
+
+@deftypefn Constructor ListItem @{@} (const std::string &@var{text}, const StyleBuilder &@var{style})
+创建指定文本和样式的 ListItem 对象。
+@var{text} 为项目文本，@var{style} 为样式对象。
+@end deftypefn
+
+@deftypefn Method ListItem &ListItem::setText @{@} (const std::string &@var{text})
+设置项目文本。
+@end deftypefn
+
+@deftypefn Method ListItem &ListItem::setStyle @{@} (const StyleBuilder &@var{style})
+设置项目样式。
+@end deftypefn
+
+@deftypefn Method ListItem &ListItem::setIndent @{@} (int @var{indent})
+设置项目缩进级别。@var{indent} 为缩进层级数。
+@end deftypefn
+
+@node List 类定义
+@section List 类定义
+
+List 类定义在头文件 @file{termtools/ui/list.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class List @{
+public:
+    List();
+    explicit List(ListType type);
+
+    List &setType(ListType type);
+    List &addItem(const std::string &item);
+    List &addItem(const ListItem &item);
+    List &setColor(const Color &color);
+    List &setBullet(const std::string &bullet);
+    List &setIndentSize(int size);
+    List &setStartNumber(int start);
+
+    ListType getType() const;
+    std::vector<ListItem> getItems() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(const std::vector<std::string> &items,
+                               ListType type = ListType::Unordered,
+                               const Color &color = Color(ColorName::Magenta));
+    static void print(const std::vector<std::string> &items,
+                      ListType type = ListType::Unordered,
+                      const Color &color = Color(ColorName::Magenta));
+@};
+
+@}
+@end group
+@end example
+
+@node List 构造函数
+@section List 构造函数
+
+@deftypefn Constructor List @{@} ()
+创建默认的无序列表对象。
+@end deftypefn
+
+@deftypefn Constructor List @{@} (ListType @var{type})
+创建指定类型的列表对象。@var{type} 为 ListType 枚举值。
+@end deftypefn
+
+@node List 方法
+@section List 方法
+
+@deftypefn Method List &List::setType @{@} (ListType @var{type})
+设置列表类型。@var{type} 为 ListType::Unordered 或 ListType::Ordered。
+@end deftypefn
+
+@deftypefn Method List &List::addItem @{@} (const std::string &@var{item})
+添加列表项。@var{item} 为项目文本字符串。
+@end deftypefn
+
+@deftypefn Method List &List::addItem @{@} (const ListItem &@var{item})
+添加列表项。@var{item} 为 ListItem 对象。
+@end deftypefn
+
+@deftypefn Method List &List::setColor @{@} (const Color &@var{color})
+设置列表颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method List &List::setBullet @{@} (const std::string &@var{bullet})
+设置自定义项目符号。@var{bullet} 为项目符号字符串。
+@end deftypefn
+
+@deftypefn Method List &List::setIndentSize @{@} (int @var{size})
+设置缩进大小。@var{size} 为每级缩进的空格数。
+@end deftypefn
+
+@deftypefn Method List &List::setStartNumber @{@} (int @var{start})
+设置有序列表的起始编号。@var{start} 为起始数字。
+@end deftypefn
+
+@deftypefn Method ListType List::getType @{@} () const
+获取列表类型。
+@end deftypefn
+
+@deftypefn Method std::vector<ListItem> List::getItems @{@} () const
+获取所有列表项。
+@end deftypefn
+
+@deftypefn Method std::string List::render @{@} () const
+渲染列表并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void List::print @{@} () const
+将列表输出到标准输出。
+@end deftypefn
+
+@node List 使用示例
+@section List 使用示例
+
+@example
+@group
+#include <termtools/ui/list.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    List unorderedList(ListType::Unordered);
+    unorderedList.addItem("第一项")
+                  .addItem("第二项")
+                  .addItem("第三项")
+                  .setColor(Color(ColorName::Green));
+    unorderedList.print();
+
+    List orderedList(ListType::Ordered);
+    orderedList.addItem("步骤一")
+               .addItem("步骤二")
+               .addItem("步骤三")
+               .setStartNumber(1);
+    orderedList.print();
+
+    ListItem item("嵌套项目");
+    item.setIndent(1);
+    List nestedList;
+    nestedList.addItem("主项目")
+              .addItem(item);
+    nestedList.print();
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Quote 组件
+@chapter Quote 组件
+
+Quote 组件用于创建引用块，常用于显示提示信息或引文。
+
+@menu
+* Quote 类定义::
+* Quote 构造函数::
+* Quote 方法::
+* Quote 使用示例::
+@end menu
+
+@node Quote 类定义
+@section Quote 类定义
+
+Quote 类定义在头文件 @file{termtools/ui/quote.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Quote @{
+public:
+    Quote();
+    explicit Quote(const std::string &text);
+    explicit Quote(const Text &text);
+
+    Quote &setText(const std::string &text);
+    Quote &setText(const Text &text);
+    Quote &setColor(const Color &color);
+    Quote &setItalic(bool italic = true);
+    Quote &setPrefix(const std::string &prefix);
+    Quote &setStyle(const StyleBuilder &style);
+
+    std::string getText() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(const std::string &text,
+                               const Color &color = Color(ColorName::Green));
+    static void print(const std::string &text,
+                      const Color &color = Color(ColorName::Green));
+@};
+
+@}
+@end group
+@end example
+
+@node Quote 构造函数
+@section Quote 构造函数
+
+@deftypefn Constructor Quote @{@} ()
+创建空的 Quote 对象。
+@end deftypefn
+
+@deftypefn Constructor Quote @{@} (const std::string &@var{text})
+创建指定文本的 Quote 对象。@var{text} 为引用文本。
+@end deftypefn
+
+@deftypefn Constructor Quote @{@} (const Text &@var{text})
+创建指定 Text 内容的 Quote 对象。@var{text} 为 Text 对象。
+@end deftypefn
+
+@node Quote 方法
+@section Quote 方法
+
+@deftypefn Method Quote &Quote::setText @{@} (const std::string &@var{text})
+设置引用文本。@var{text} 为文本字符串。
+@end deftypefn
+
+@deftypefn Method Quote &Quote::setText @{@} (const Text &@var{text})
+设置引用文本。@var{text} 为 Text 对象。
+@end deftypefn
+
+@deftypefn Method Quote &Quote::setColor @{@} (const Color &@var{color})
+设置引用颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method Quote &Quote::setItalic @{@} (bool @var{italic} = true)
+设置是否斜体。@var{italic} 为 true 时显示斜体效果。
+@end deftypefn
+
+@deftypefn Method Quote &Quote::setPrefix @{@} (const std::string &@var{prefix})
+设置自定义前缀符号。@var{prefix} 为前缀字符串，默认为竖线符号。
+@end deftypefn
+
+@deftypefn Method Quote &Quote::setStyle @{@} (const StyleBuilder &@var{style})
+设置引用样式。@var{style} 为 StyleBuilder 对象。
+@end deftypefn
+
+@deftypefn Method std::string Quote::getText @{@} () const
+获取引用文本。
+@end deftypefn
+
+@deftypefn Method std::string Quote::render @{@} () const
+渲染引用块并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Quote::print @{@} () const
+将引用块输出到标准输出。
+@end deftypefn
+
+@node Quote 使用示例
+@section Quote 使用示例
+
+@example
+@group
+#include <termtools/ui/quote.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Quote quote("这是一段重要的引用文字。");
+    quote.setColor(Color(ColorName::Green))
+         .setItalic(true)
+         .setPrefix("│ ");
+    quote.print();
+
+    Quote::print("快速引用文本", Color(ColorName::Yellow));
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node CodeBlock 组件
+@chapter CodeBlock 组件
+
+CodeBlock 组件用于创建多行代码块，支持语法高亮标记。
+
+@menu
+* CodeBlock 类定义::
+* CodeBlock 构造函数::
+* CodeBlock 方法::
+* CodeBlock 使用示例::
+@end menu
+
+@node CodeBlock 类定义
+@section CodeBlock 类定义
+
+CodeBlock 类定义在头文件 @file{termtools/ui/codeblock.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class CodeBlock @{
+public:
+    CodeBlock();
+    explicit CodeBlock(const std::string &code);
+    CodeBlock(const std::string &code, const std::string &language);
+
+    CodeBlock &setCode(const std::string &code);
+    CodeBlock &setLanguage(const std::string &language);
+    CodeBlock &setColor(const Color &color);
+    CodeBlock &setDim(bool dim = true);
+    CodeBlock &setShowBorder(bool show = true);
+    CodeBlock &setBorderStyle(const std::string &style);
+
+    std::string getCode() const;
+    std::string getLanguage() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(const std::string &code, const std::string &language = "",
+                               const Color &color = Color(ColorName::Yellow));
+    static void print(const std::string &code, const std::string &language = "",
+                      const Color &color = Color(ColorName::Yellow));
+@};
+
+@}
+@end group
+@end example
+
+@node CodeBlock 构造函数
+@section CodeBlock 构造函数
+
+@deftypefn Constructor CodeBlock @{@} ()
+创建空的 CodeBlock 对象。
+@end deftypefn
+
+@deftypefn Constructor CodeBlock @{@} (const std::string &@var{code})
+创建指定代码内容的 CodeBlock 对象。@var{code} 为代码字符串。
+@end deftypefn
+
+@deftypefn Constructor CodeBlock @{@} (const std::string &@var{code}, const std::string &@var{language})
+创建指定代码和语言的 CodeBlock 对象。
+@var{code} 为代码字符串，@var{language} 为语言标识符。
+@end deftypefn
+
+@node CodeBlock 方法
+@section CodeBlock 方法
+
+@deftypefn Method CodeBlock &CodeBlock::setCode @{@} (const std::string &@var{code})
+设置代码内容。@var{code} 为代码字符串。
+@end deftypefn
+
+@deftypefn Method CodeBlock &CodeBlock::setLanguage @{@} (const std::string &@var{language})
+设置编程语言标识。@var{language} 为语言名称字符串。
+@end deftypefn
+
+@deftypefn Method CodeBlock &CodeBlock::setColor @{@} (const Color &@var{color})
+设置代码颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method CodeBlock &CodeBlock::setDim @{@} (bool @var{dim} = true)
+设置是否使用暗淡效果。@var{dim} 为 true 时显示暗淡效果。
+@end deftypefn
+
+@deftypefn Method CodeBlock &CodeBlock::setShowBorder @{@} (bool @var{show} = true)
+设置是否显示边框。@var{show} 为 true 时显示边框。
+@end deftypefn
+
+@deftypefn Method CodeBlock &CodeBlock::setBorderStyle @{@} (const std::string &@var{style})
+设置边框样式。@var{style} 为边框样式字符串。
+@end deftypefn
+
+@deftypefn Method std::string CodeBlock::getCode @{@} () const
+获取代码内容。
+@end deftypefn
+
+@deftypefn Method std::string CodeBlock::getLanguage @{@} () const
+获取编程语言标识。
+@end deftypefn
+
+@deftypefn Method std::string CodeBlock::render @{@} () const
+渲染代码块并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void CodeBlock::print @{@} () const
+将代码块输出到标准输出。
+@end deftypefn
+
+@node CodeBlock 使用示例
+@section CodeBlock 使用示例
+
+@example
+@group
+#include <termtools/ui/codeblock.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    std::string code = R"(
+int main() @{
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+@}
+)";
+
+    CodeBlock codeBlock(code, "cpp");
+    codeBlock.setColor(Color(ColorName::Yellow))
+            .setShowBorder(true)
+            .setDim(false);
+    codeBlock.print();
+
+    CodeBlock::print("print('Hello')", "python", Color(ColorName::Green));
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node InlineCode 组件
+@chapter InlineCode 组件
+
+InlineCode 组件用于创建行内代码片段。
+
+@menu
+* InlineCode 类定义::
+* InlineCode 构造函数::
+* InlineCode 方法::
+* InlineCode 使用示例::
+@end menu
+
+@node InlineCode 类定义
+@section InlineCode 类定义
+
+InlineCode 类定义在头文件 @file{termtools/ui/codeblock.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class InlineCode @{
+public:
+    InlineCode();
+    explicit InlineCode(const std::string &code);
+
+    InlineCode &setCode(const std::string &code);
+    InlineCode &setColor(const Color &color);
+    InlineCode &setBold(bool bold = true);
+    InlineCode &setBackground(const Color &bgColor);
+
+    std::string getCode() const;
+
+    std::string render() const;
+    void print() const;
+
+    static std::string render(const std::string &code,
+                               const Color &color = Color(ColorName::Yellow));
+    static void print(const std::string &code,
+                      const Color &color = Color(ColorName::Yellow));
+@};
+
+@}
+@end group
+@end example
+
+@node InlineCode 构造函数
+@section InlineCode 构造函数
+
+@deftypefn Constructor InlineCode @{@} ()
+创建空的 InlineCode 对象。
+@end deftypefn
+
+@deftypefn Constructor InlineCode @{@} (const std::string &@var{code})
+创建指定代码内容的 InlineCode 对象。@var{code} 为代码字符串。
+@end deftypefn
+
+@node InlineCode 方法
+@section InlineCode 方法
+
+@deftypefn Method InlineCode &InlineCode::setCode @{@} (const std::string &@var{code})
+设置代码内容。@var{code} 为代码字符串。
+@end deftypefn
+
+@deftypefn Method InlineCode &InlineCode::setColor @{@} (const Color &@var{color})
+设置代码颜色。@var{color} 为 Color 对象。
+@end deftypefn
+
+@deftypefn Method InlineCode &InlineCode::setBold @{@} (bool @var{bold} = true)
+设置是否加粗。@var{bold} 为 true 时加粗显示。
+@end deftypefn
+
+@deftypefn Method InlineCode &InlineCode::setBackground @{@} (const Color &@var{bgColor})
+设置背景颜色。@var{bgColor} 为背景 Color 对象。
+@end deftypefn
+
+@deftypefn Method std::string InlineCode::getCode @{@} () const
+获取代码内容。
+@end deftypefn
+
+@deftypefn Method std::string InlineCode::render @{@} () const
+渲染行内代码并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void InlineCode::print @{@} () const
+将行内代码输出到标准输出。
+@end deftypefn
+
+@node InlineCode 使用示例
+@section InlineCode 使用示例
+
+@example
+@group
+#include <termtools/ui/codeblock.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    InlineCode code("std::cout");
+    code.setColor(Color(ColorName::Yellow))
+        .setBold(true)
+        .setBackground(Color(ColorName::BrightBlack));
+    code.print();
+
+    InlineCode::print("printf()", Color(ColorName::Cyan));
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Columns 组件
+@chapter Columns 组件
+
+Columns 组件用于创建多列布局。
+
+@menu
+* Columns 类定义::
+* Columns 构造函数::
+* Columns 方法::
+* Columns 使用示例::
+@end menu
+
+@node Columns 类定义
+@section Columns 类定义
+
+Columns 类定义在头文件 @file{termtools/ui/columns.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Columns @{
+public:
+    Columns();
+    explicit Columns(int columnCount);
+
+    Columns &add(const Text &text);
+    Columns &add(const std::string &text);
+    Columns &add(const std::vector<Text> &texts);
+
+    Columns &setExpand(bool expand);
+    Columns &setPadding(int padding);
+    Columns &setEqualWidth(bool equalWidth);
+
+    std::string render() const;
+    void print(Console &console) const;
+@};
+
+@}
+@end group
+@end example
+
+@node Columns 构造函数
+@section Columns 构造函数
+
+@deftypefn Constructor Columns @{@} ()
+创建默认的 Columns 对象。
+@end deftypefn
+
+@deftypefn Constructor Columns @{@} (int @var{columnCount})
+创建指定列数的 Columns 对象。@var{columnCount} 为列数。
+@end deftypefn
+
+@node Columns 方法
+@section Columns 方法
+
+@deftypefn Method Columns &Columns::add @{@} (const Text &@var{text})
+添加 Text 对象到下一列。@var{text} 为 Text 对象。
+@end deftypefn
+
+@deftypefn Method Columns &Columns::add @{@} (const std::string &@var{text})
+添加字符串到下一列。@var{text} 为文本字符串。
+@end deftypefn
+
+@deftypefn Method Columns &Columns::add @{@} (const std::vector<Text> &@var{texts})
+批量添加多个 Text 对象。@var{texts} 为 Text 对象向量。
+@end deftypefn
+
+@deftypefn Method Columns &Columns::setExpand @{@} (bool @var{expand})
+设置是否扩展至终端宽度。@var{expand} 为 true 时自动扩展。
+@end deftypefn
+
+@deftypefn Method Columns &Columns::setPadding @{@} (int @var{padding})
+设置列间距。@var{padding} 为间距字符数。
+@end deftypefn
+
+@deftypefn Method Columns &Columns::setEqualWidth @{@} (bool @var{equalWidth})
+设置是否使用等宽列。@var{equalWidth} 为 true 时各列宽度相等。
+@end deftypefn
+
+@deftypefn Method std::string Columns::render @{@} () const
+渲染多列布局并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Columns::print @{@} (Console &@var{console}) const
+将多列布局输出到指定的 Console 对象。
+@end deftypefn
+
+@node Columns 使用示例
+@section Columns 使用示例
+
+@example
+@group
+#include <termtools/ui/columns.h>
+#include <termtools/core/console.h>
+#include <termtools/text/text.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Columns cols(3);
+    cols.add("第一列内容")
+        .add("第二列内容")
+        .add("第三列内容")
+        .setPadding(4)
+        .setEqualWidth(true);
+    cols.print(console);
+
+    Columns cols2;
+    Text left("左侧");
+    left.colored(Color(ColorName::Cyan));
+    
+    Text right("右侧");
+    right.colored(Color(ColorName::Yellow));
+    
+    cols2.add(left).add(right).setExpand(true);
+    cols2.print(console);
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Group 组件
+@chapter Group 组件
+
+Group 组件用于将多个 UI 组件组合在一起显示。
+
+@menu
+* Group 类定义::
+* Group 构造函数::
+* Group 方法::
+* Group 使用示例::
+@end menu
+
+@node Group 类定义
+@section Group 类定义
+
+Group 类定义在头文件 @file{termtools/ui/group.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Group @{
+public:
+    Group();
+    explicit Group(const std::string &title);
+
+    Group &add(const Text &text);
+    Group &add(const std::string &text);
+    Group &add(const Panel &panel);
+    Group &add(const Table &table);
+
+    Group &setTitle(const std::string &title);
+    Group &setBorderStyle(const StyleBuilder &style);
+
+    std::string render() const;
+    void print(Console &console) const;
+@};
+
+@}
+@end group
+@end example
+
+@node Group 构造函数
+@section Group 构造函数
+
+@deftypefn Constructor Group @{@} ()
+创建无标题的 Group 对象。
+@end deftypefn
+
+@deftypefn Constructor Group @{@} (const std::string &@var{title})
+创建带标题的 Group 对象。@var{title} 为组标题。
+@end deftypefn
+
+@node Group 方法
+@section Group 方法
+
+@deftypefn Method Group &Group::add @{@} (const Text &@var{text})
+添加 Text 对象到组中。@var{text} 为 Text 对象。
+@end deftypefn
+
+@deftypefn Method Group &Group::add @{@} (const std::string &@var{text})
+添加字符串到组中。@var{text} 为文本字符串。
+@end deftypefn
+
+@deftypefn Method Group &Group::add @{@} (const Panel &@var{panel})
+添加 Panel 组件到组中。@var{panel} 为 Panel 对象。
+@end deftypefn
+
+@deftypefn Method Group &Group::add @{@} (const Table &@var{table})
+添加 Table 组件到组中。@var{table} 为 Table 对象。
+@end deftypefn
+
+@deftypefn Method Group &Group::setTitle @{@} (const std::string &@var{title})
+设置组标题。@var{title} 为标题字符串。
+@end deftypefn
+
+@deftypefn Method Group &Group::setBorderStyle @{@} (const StyleBuilder &@var{style})
+设置边框样式。@var{style} 为 StyleBuilder 对象。
+@end deftypefn
+
+@deftypefn Method std::string Group::render @{@} () const
+渲染组并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Group::print @{@} (Console &@var{console}) const
+将组输出到指定的 Console 对象。
+@end deftypefn
+
+@node Group 使用示例
+@section Group 使用示例
+
+@example
+@group
+#include <termtools/ui/group.h>
+#include <termtools/ui/panel.h>
+#include <termtools/ui/table.h>
+#include <termtools/core/console.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Group group("系统状态");
+    group.setBorderStyle(StyleBuilder().color(Color(ColorName::Cyan)));
+
+    Panel panel("CPU", "使用率: 45%");
+    panel.setTitleColor(Color(ColorName::Green));
+    group.add(panel);
+
+    Table table;
+    table.addColumn("指标")
+         .addColumn("数值");
+    table.addRow(@{"内存", "8GB"@});
+    table.addRow(@{"磁盘", "256GB"@});
+    group.add(table);
+
+    group.add("最后更新: 2024-01-01");
+    
+    group.print(console);
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node Table 组件
+@chapter Table 组件
+
+Table 组件用于创建格式化的表格，支持多种边框样式和自定义样式。
+
+@menu
+* BorderType 枚举::
+* Table 类定义::
+* Table 构造函数::
+* Table 方法::
+* Table 使用示例::
+@end menu
+
+@node BorderType 枚举
+@section BorderType 枚举
+
+BorderType 枚举定义了表格的边框类型：
+
+@example
+@group
+enum class BorderType @{
+    None,            // 无边框
+    ASCII,           // ASCII 字符边框
+    Unicode,         // Unicode 边框
+    UnicodeRounded,  // 圆角 Unicode 边框
+    UnicodeDouble,   // 双线 Unicode 边框
+    Markdown,        // Markdown 风格边框
+    Dotted,          // 点线边框
+    Heavy            // 粗线边框
+@};
+@end group
+@end example
+
+@node Table 类定义
+@section Table 类定义
+
+Table 类定义在头文件 @file{termtools/ui/table.h} 中：
+
+@example
+@group
+namespace termtools @{
+
+class Table @{
+public:
+    struct Column @{
+        std::string header;
+        Justify justify = Justify::Left;
+        int width = 0;
+        int minWidth = 0;
+        int maxWidth = 0;
+        bool no_wrap = false;
+        Color headerColor;
+        StyleBuilder headerStyle;
+        bool visible = true;
+    @};
+
+    struct Cell @{
+        std::string content;
+        CellStyle style;
+    @};
+
+    Table();
+    explicit Table(const std::vector<std::string> &headers);
+
+    Table &addColumn(const std::string &header);
+    Table &addColumn(const Column &column);
+
+    Table &addRow(std::initializer_list<std::string> cells);
+    Table &addRow(const std::vector<std::string> &cells);
+    Table &addRow(const std::vector<Text> &cells);
+    Table &addRow(const std::vector<Cell> &cells);
+
+    Table &setHeaderStyle(const StyleBuilder &style);
+    Table &setHeaderColor(const Color &color);
+    Table &setBorderStyle(const StyleBuilder &style);
+    Table &setRowStyle(const StyleBuilder &style);
+    Table &setBorderType(BorderType type);
+
+    Table &setShowHeader(bool show);
+    Table &setShowBorder(bool show);
+    Table &setShowEdge(bool show);
+    Table &setPadding(int padding);
+
+    Table &setTitle(const std::string &title);
+    Table &setCaption(const std::string &caption);
+
+    Table &setZebraStripes(bool enable);
+    Table &setZebraColors(const Color &odd, const Color &even);
+
+    std::string render() const;
+    void print(Console &console) const;
+
+    int getColumnCount() const;
+    int getRowCount() const;
+@};
+
+@}
+@end group
+@end example
+
+@node Table 构造函数
+@section Table 构造函数
+
+@deftypefn Constructor Table @{@} ()
+创建空的 Table 对象。
+@end deftypefn
+
+@deftypefn Constructor Table @{@} (const std::vector<std::string> &@var{headers})
+创建带表头的 Table 对象。@var{headers} 为表头字符串向量。
+@end deftypefn
+
+@node Table 方法
+@section Table 方法
+
+@deftypefn Method Table &Table::addColumn @{@} (const std::string &@var{header})
+添加列。@var{header} 为列标题。
+@end deftypefn
+
+@deftypefn Method Table &Table::addColumn @{@} (const Column &@var{column})
+添加列。@var{column} 为 Column 结构体对象。
+@end deftypefn
+
+@deftypefn Method Table &Table::addRow @{@} (std::initializer_list<std::string> @var{cells})
+添加行。@var{cells} 为单元格内容初始化列表。
+@end deftypefn
+
+@deftypefn Method Table &Table::addRow @{@} (const std::vector<std::string> &@var{cells})
+添加行。@var{cells} 为单元格内容向量。
+@end deftypefn
+
+@deftypefn Method Table &Table::setHeaderStyle @{@} (const StyleBuilder &@var{style})
+设置表头样式。
+@end deftypefn
+
+@deftypefn Method Table &Table::setHeaderColor @{@} (const Color &@var{color})
+设置表头颜色。
+@end deftypefn
+
+@deftypefn Method Table &Table::setBorderStyle @{@} (const StyleBuilder &@var{style})
+设置边框样式。
+@end deftypefn
+
+@deftypefn Method Table &Table::setBorderType @{@} (BorderType @var{type})
+设置边框类型。
+@end deftypefn
+
+@deftypefn Method Table &Table::setShowHeader @{@} (bool @var{show})
+设置是否显示表头。
+@end deftypefn
+
+@deftypefn Method Table &Table::setShowBorder @{@} (bool @var{show})
+设置是否显示边框。
+@end deftypefn
+
+@deftypefn Method Table &Table::setPadding @{@} (int @var{padding})
+设置单元格内边距。
+@end deftypefn
+
+@deftypefn Method Table &Table::setTitle @{@} (const std::string &@var{title})
+设置表格标题。
+@end deftypefn
+
+@deftypefn Method Table &Table::setCaption @{@} (const std::string &@var{caption})
+设置表格说明文字。
+@end deftypefn
+
+@deftypefn Method Table &Table::setZebraStripes @{@} (bool @var{enable})
+设置是否启用斑马纹效果。
+@end deftypefn
+
+@deftypefn Method Table &Table::setZebraColors @{@} (const Color &@var{odd}, const Color &@var{even})
+设置斑马纹颜色。@var{odd} 为奇数行颜色，@var{even} 为偶数行颜色。
+@end deftypefn
+
+@deftypefn Method std::string Table::render @{@} () const
+渲染表格并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method void Table::print @{@} (Console &@var{console}) const
+将表格输出到指定的 Console 对象。
+@end deftypefn
+
+@node Table 使用示例
+@section Table 使用示例
+
+@example
+@group
+#include <termtools/ui/table.h>
+#include <termtools/core/console.h>
+#include <termtools/color/color.h>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Table table;
+    table.addColumn("名称")
+         .addColumn("类型")
+         .addColumn("大小");
+    
+    table.addRow(@{"文档.pdf", "PDF", "2.5 MB"@});
+    table.addRow(@{"图片.png", "图片", "1.2 MB"@});
+    table.addRow(@{"代码.cpp", "源码", "45 KB"@});
+    
+    table.setHeaderColor(Color(ColorName::Cyan))
+         .setBorderType(BorderType::UnicodeRounded)
+         .setPadding(2)
+         .setZebraStripes(true);
+    
+    table.print(console);
+    
+    return 0;
+@}
+@end group
+@end example
+
+@node 辅助类
+@chapter 辅助类
+
+本章介绍 TermTools UI 组件使用的辅助类。
+
+@menu
+* Color 类::
+* StyleBuilder 类::
+* Text 类::
+* Console 类::
+@end menu
+
+@node Color 类
+@section Color 类
+
+Color 类用于表示终端颜色，定义在头文件 @file{termtools/color/color.h} 中。
+
+@subsection ColorName 枚举
+
+@example
+@group
+enum class ColorName : uint8_t @{
+    Black = 0,
+    Red = 1,
+    Green = 2,
+    Yellow = 3,
+    Blue = 4,
+    Magenta = 5,
+    Cyan = 6,
+    White = 7,
+    BrightBlack = 8,
+    BrightRed = 9,
+    BrightGreen = 10,
+    BrightYellow = 11,
+    BrightBlue = 12,
+    BrightMagenta = 13,
+    BrightCyan = 14,
+    BrightWhite = 15
+@};
+@end group
+@end example
+
+@subsection Color 构造函数
+
+@deftypefn Constructor Color @{@} ()
+创建默认颜色（终端默认颜色）。
+@end deftypefn
+
+@deftypefn Constructor Color @{@} (ColorName @var{name})
+创建命名颜色。@var{name} 为 ColorName 枚举值。
+@end deftypefn
+
+@deftypefn Constructor Color @{@} (uint8_t @var{r}, uint8_t @var{g}, uint8_t @var{b})
+创建 RGB 真彩色。@var{r}、@var{g}、@var{b} 分别为红、绿、蓝分量（0-255）。
+@end deftypefn
+
+@deftypefn Constructor Color @{@} (uint8_t @var{index256})
+创建 256 色索引颜色。@var{index256} 为颜色索引（0-255）。
+@end deftypefn
+
+@subsection Color 使用示例
+
+@example
+@group
+Color named(ColorName::Cyan);           // 命名颜色
+Color rgb(255, 128, 0);                 // RGB 颜色
+Color indexed(214);                     // 256 色索引
+@end group
+@end example
+
+@node StyleBuilder 类
+@section StyleBuilder 类
+
+StyleBuilder 类用于构建文本样式，定义在头文件 @file{termtools/core/style.h} 中。
+
+@subsection Style 枚举
+
+@example
+@group
+enum class Style : uint8_t @{
+    Bold = 1,
+    Dim = 2,
+    Italic = 3,
+    Underline = 4,
+    Blink = 5,
+    Reverse = 7,
+    Hidden = 8,
+    Strikethrough = 9
+@};
+@end group
+@end example
+
+@subsection StyleBuilder 方法
+
+@deftypefn Method StyleBuilder &StyleBuilder::bold @{@} (bool @var{enable} = true)
+设置粗体样式。
+@end deftypefn
+
+@deftypefn Method StyleBuilder &StyleBuilder::dim @{@} (bool @var{enable} = true)
+设置暗淡样式。
+@end deftypefn
+
+@deftypefn Method StyleBuilder &StyleBuilder::italic @{@} (bool @var{enable} = true)
+设置斜体样式。
+@end deftypefn
+
+@deftypefn Method StyleBuilder &StyleBuilder::underline @{@} (bool @var{enable} = true)
+设置下划线样式。
+@end deftypefn
+
+@deftypefn Method StyleBuilder &StyleBuilder::color @{@} (const Color &@var{color})
+设置前景色。
+@end deftypefn
+
+@deftypefn Method StyleBuilder &StyleBuilder::bgColor @{@} (const Color &@var{color})
+设置背景色。
+@end deftypefn
+
+@subsection StyleBuilder 使用示例
+
+@example
+@group
+StyleBuilder style;
+style.bold().italic().color(Color(ColorName::Yellow));
+
+StyleBuilder bgStyle;
+bgStyle.bgColor(Color(ColorName::Blue)).color(Color(ColorName::White));
+@end group
+@end example
+
+@node Text 类
+@section Text 类
+
+Text 类用于构建带样式的文本，定义在头文件 @file{termtools/text/text.h} 中。
+
+@subsection Text 构造函数
+
+@deftypefn Constructor Text @{@} ()
+创建空的 Text 对象。
+@end deftypefn
+
+@deftypefn Constructor Text @{@} (const std::string &@var{content})
+创建指定内容的 Text 对象。
+@end deftypefn
+
+@deftypefn Constructor Text @{@} (const std::string &@var{content}, const Color &@var{color})
+创建指定内容和颜色的 Text 对象。
+@end deftypefn
+
+@deftypefn Constructor Text @{@} (const std::string &@var{content}, const StyleBuilder &@var{style})
+创建指定内容和样式的 Text 对象。
+@end deftypefn
+
+@subsection Text 方法
+
+@deftypefn Method Text &Text::append @{@} (const Text &@var{other})
+追加 Text 对象。
+@end deftypefn
+
+@deftypefn Method Text &Text::append @{@} (const std::string &@var{str})
+追加字符串。
+@end deftypefn
+
+@deftypefn Method Text &Text::append @{@} (const std::string &@var{str}, const Color &@var{color})
+追加带颜色的字符串。
+@end deftypefn
+
+@deftypefn Method Text &Text::styled @{@} (const StyleBuilder &@var{style})
+应用样式。
+@end deftypefn
+
+@deftypefn Method Text &Text::colored @{@} (const Color &@var{color})
+应用颜色。
+@end deftypefn
+
+@deftypefn Method std::string Text::render @{@} () const
+渲染并返回 ANSI 格式化字符串。
+@end deftypefn
+
+@deftypefn Method std::string Text::plain @{@} () const
+返回去除 ANSI 转义序列的纯文本。
+@end deftypefn
+
+@subsection Text 使用示例
+
+@example
+@group
+Text text("Hello ");
+text.append("World", Color(ColorName::Green))
+    .append("!")
+    .styled(StyleBuilder().bold());
+std::cout << text.render() << std::endl;
+@end group
+@end example
+
+@node Console 类
+@section Console 类
+
+Console 类用于控制终端输出，定义在头文件 @file{termtools/core/console.h} 中。
+
+@subsection Console 构造函数
+
+@deftypefn Constructor Console @{@} ()
+创建默认的 Console 对象（输出到 stdout）。
+@end deftypefn
+
+@deftypefn Constructor Console @{@} (std::ostream &@var{stream})
+创建输出到指定流的 Console 对象。
+@end deftypefn
+
+@subsection Console 方法
+
+@deftypefn Method void Console::print @{@} (const std::string &@var{text})
+输出字符串。
+@end deftypefn
+
+@deftypefn Method void Console::print @{@} (const Text &@var{text})
+输出 Text 对象。
+@end deftypefn
+
+@deftypefn Method void Console::println @{@} (const std::string &@var{text} = "")
+输出字符串并换行。
+@end deftypefn
+
+@deftypefn Method void Console::clear @{@} ()
+清屏。
+@end deftypefn
+
+@deftypefn Method int Console::getTerminalWidth @{@} () const
+获取终端宽度。
+@end deftypefn
+
+@deftypefn Method int Console::getTerminalHeight @{@} () const
+获取终端高度。
+@end deftypefn
+
+@deftypefn Method bool Console::isColorSupported @{@} () const
+检查终端是否支持颜色。
+@end deftypefn
+
+@deftypefn Method static Console &Console::getStdout @{@} ()
+获取标准输出的 Console 单例。
+@end deftypefn
+
+@node 索引
+@chapter 索引
+
+@menu
+* 函数索引::
+* 类索引::
+@end menu
+
+@node 函数索引
+@section 函数索引
+
+@printindex fn
+
+@node 类索引
+@section 类索引
+
+@printindex tp
+
+@bye

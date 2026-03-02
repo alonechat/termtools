@@ -1,0 +1,606 @@
+@node Keyboard
+@section 键盘输入
+
+TermTools 键盘输入模块提供了跨平台的原始模式键盘输入支持。该模块允许程序直接读取键盘事件，包括特殊键、功能键和修饰键状态。
+
+@subsection 概述
+
+@code{Keyboard} 类是一个纯静态类，所有方法均为静态方法，无需创建实例即可使用。该类提供了完整的键盘事件处理功能，包括：
+
+@itemize
+@item 原始模式控制
+@item 键盘事件读取
+@item 事件回调机制
+@item 键盘事件循环
+@item 键名转换工具
+@end itemize
+
+头文件位置：@file{termtools/input/keyboard.h}
+
+@subsection 原始模式
+
+原始模式（Raw Mode）是一种终端输入模式，在此模式下，终端不会对输入进行行缓冲处理，程序可以直接读取每个按键事件。
+
+@subheading setRawMode
+
+@deftypefn {静态方法} void Keyboard::setRawMode (bool @var{enable})
+启用或禁用终端原始模式。
+
+@table @var
+@item enable
+若为 @code{true}，启用原始模式；若为 @code{false}，禁用原始模式并恢复默认终端设置。
+@end table
+
+在原始模式下，终端将：
+
+@itemize
+@item 禁用行缓冲
+@item 禁用回显
+@item 允许读取特殊键和功能键
+@end itemize
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Keyboard::setRawMode(true);
+    
+    // 在此区域内的键盘输入将以原始模式处理
+    
+    Keyboard::setRawMode(false);
+    return 0;
+@}
+@end example
+@end deftypefn
+
+@subheading isRawModeEnabled
+
+@deftypefn {静态方法} bool Keyboard::isRawModeEnabled ()
+检查当前是否处于原始模式。
+
+@return 返回 @code{true} 表示原始模式已启用，@code{false} 表示已禁用。
+
+@example
+if (Keyboard::isRawModeEnabled()) @{
+    std::cout << "原始模式已启用" << std::endl;
+@}
+@end example
+@end deftypefn
+
+@subsection KeyEvent 结构体
+
+@code{KeyEvent} 结构体用于描述一个键盘事件，包含按键信息、字符值和修饰键状态。
+
+@deftp {结构体} Keyboard::KeyEvent
+键盘事件结构体，包含以下成员：
+
+@table @code
+@item Key key
+按键枚举值，表示按下的键。对于普通字符键，此值为 @code{Key::Unknown}，应使用 @code{ch} 成员获取字符值。
+
+@item char ch
+按键对应的 ASCII 字符。对于特殊键（如方向键、功能键），此值为 @code{'\0'}。
+
+@item bool ctrl
+Ctrl 修饰键是否被按下。
+
+@item bool alt
+Alt 修饰键是否被按下。
+
+@item bool shift
+Shift 修饰键是否被按下。
+@end table
+@end deftp
+
+示例用法：
+
+@example
+Keyboard::KeyEvent event = Keyboard::readKey();
+
+if (event.key == Key::Up) @{
+    std::cout << "按下了上方向键" << std::endl;
+@}
+
+if (event.ctrl && event.ch == 'c') @{
+    std::cout << "按下了 Ctrl+C" << std::endl;
+@}
+@end example
+
+@subsection Key 枚举
+
+@code{Key} 枚举定义了所有可识别的特殊按键。
+
+@deftp {枚举} Keyboard::Key
+按键枚举值，包含以下成员：
+
+@table @code
+@item Unknown = 0
+未知按键或普通字符键
+
+@item Up = 1
+上方向键
+
+@item Down = 2
+下方向键
+
+@item Left = 3
+左方向键
+
+@item Right = 4
+右方向键
+
+@item Enter = 5
+回车键
+
+@item Escape = 6
+Esc 键
+
+@item Tab = 7
+Tab 键
+
+@item Backspace = 8
+退格键
+
+@item Delete = 9
+Delete 键
+
+@item Home = 10
+Home 键
+
+@item End = 11
+End 键
+
+@item PageUp = 12
+Page Up 键
+
+@item PageDown = 13
+Page Down 键
+
+@item F1 = 14
+F1 功能键
+
+@item F2 = 15
+F2 功能键
+
+@item F3 = 16
+F3 功能键
+
+@item F4 = 17
+F4 功能键
+
+@item F5 = 18
+F5 功能键
+
+@item F6 = 19
+F6 功能键
+
+@item F7 = 20
+F7 功能键
+
+@item F8 = 21
+F8 功能键
+
+@item F9 = 22
+F9 功能键
+
+@item F10 = 23
+F10 功能键
+
+@item F11 = 24
+F11 功能键
+
+@item F12 = 25
+F12 功能键
+@end table
+@end deftp
+
+@subsection 键盘事件读取
+
+@subheading readKey
+
+@deftypefn {静态方法} KeyEvent Keyboard::readKey (bool @var{blocking} = true)
+读取下一个键盘事件。
+
+@table @var
+@item blocking
+若为 @code{true}（默认值），方法将阻塞直到有键盘输入；若为 @code{false}，方法将立即返回，若无输入则返回的 @code{KeyEvent.key} 为 @code{Key::Unknown}。
+@end table
+
+@return 返回一个 @code{KeyEvent} 结构体，描述键盘事件。
+
+@example
+#include "termtools.h"
+#include <iostream>
+using namespace termtools;
+
+int main() @{
+    Keyboard::setRawMode(true);
+    
+    std::cout << "请按任意键（按 'q' 退出）..." << std::endl;
+    
+    while (true) @{
+        Keyboard::KeyEvent event = Keyboard::readKey(true);
+        
+        if (event.ch == 'q') @{
+            break;
+        @}
+        
+        std::cout << "按键: " << Keyboard::keyToString(event.key) << std::endl;
+    @}
+    
+    Keyboard::setRawMode(false);
+    return 0;
+@}
+@end example
+@end deftypefn
+
+@subheading hasKeyInput
+
+@deftypefn {静态方法} bool Keyboard::hasKeyInput ()
+检查是否有待处理的键盘输入。
+
+@return 若有键盘输入等待读取，返回 @code{true}；否则返回 @code{false}。
+
+此方法通常与非阻塞的 @code{readKey(false)} 配合使用：
+
+@example
+while (true) @{
+    if (Keyboard::hasKeyInput()) @{
+        Keyboard::KeyEvent event = Keyboard::readKey(false);
+        // 处理键盘事件
+    @}
+    
+    // 执行其他任务
+    doOtherWork();
+@}
+@end example
+@end deftypefn
+
+@subsection 事件回调
+
+@subheading KeyEventCallback 类型
+
+@deftp {类型定义} Keyboard::KeyEventCallback
+键盘事件回调函数类型。
+
+@example
+using KeyEventCallback = std::function<void(const KeyEvent&)>;
+@end example
+
+回调函数接收一个 @code{KeyEvent} 常量引用作为参数。
+@end deftp
+
+@subheading onKeyEvent
+
+@deftypefn {静态方法} void Keyboard::onKeyEvent (KeyEventCallback @var{callback})
+注册键盘事件回调函数。
+
+@table @var
+@item callback
+键盘事件回调函数，每次按键时将被调用。
+@end table
+
+@example
+#include "termtools.h"
+#include <iostream>
+using namespace termtools;
+
+int main() @{
+    Keyboard::setRawMode(true);
+    
+    Keyboard::onKeyEvent([](const Keyboard::KeyEvent& event) @{
+        if (event.key == Keyboard::Key::Escape) @{
+            Keyboard::stopKeyLoop();
+            return;
+        @}
+        
+        std::cout << "按键: " << Keyboard::keyToString(event.key);
+        if (event.ctrl) std::cout << " [Ctrl]";
+        if (event.alt) std::cout << " [Alt]";
+        if (event.shift) std::cout << " [Shift]";
+        std::cout << std::endl;
+    @});
+    
+    std::cout << "按 Esc 退出..." << std::endl;
+    Keyboard::startKeyLoop();
+    
+    Keyboard::setRawMode(false);
+    return 0;
+@}
+@end example
+@end deftypefn
+
+@subsection 键盘事件循环
+
+@subheading startKeyLoop
+
+@deftypefn {静态方法} void Keyboard::startKeyLoop ()
+启动键盘事件循环。
+
+此方法将阻塞当前线程，持续监听键盘输入并调用通过 @code{onKeyEvent} 注册的回调函数。调用 @code{stopKeyLoop()} 可终止事件循环。
+
+@example
+Keyboard::setRawMode(true);
+
+Keyboard::onKeyEvent([](const Keyboard::KeyEvent& event) @{
+    if (event.ch == 'q') @{
+        Keyboard::stopKeyLoop();
+    @}
+@});
+
+Keyboard::startKeyLoop();  // 阻塞直到调用 stopKeyLoop()
+
+Keyboard::setRawMode(false);
+@end example
+@end deftypefn
+
+@subheading stopKeyLoop
+
+@deftypefn {静态方法} void Keyboard::stopKeyLoop ()
+停止键盘事件循环。
+
+调用此方法将终止由 @code{startKeyLoop()} 启动的事件循环，使 @code{startKeyLoop()} 返回。
+
+@example
+Keyboard::onKeyEvent([](const Keyboard::KeyEvent& event) @{
+    if (event.key == Keyboard::Key::Escape) @{
+        Keyboard::stopKeyLoop();  // 按 Esc 退出事件循环
+    @}
+@});
+@end example
+@end deftypefn
+
+@subsection 工具方法
+
+@subheading keyToString
+
+@deftypefn {静态方法} std::string Keyboard::keyToString (Key @var{key})
+将按键枚举值转换为可读字符串。
+
+@table @var
+@item key
+要转换的按键枚举值。
+@end table
+
+@return 返回按键名称的字符串表示。
+
+@example
+std::cout << Keyboard::keyToString(Keyboard::Key::Up);      // 输出: "Up"
+std::cout << Keyboard::keyToString(Keyboard::Key::F1);      // 输出: "F1"
+std::cout << Keyboard::keyToString(Keyboard::Key::Enter);   // 输出: "Enter"
+std::cout << Keyboard::keyToString(Keyboard::Key::Unknown); // 输出: "Unknown"
+@end example
+@end deftypefn
+
+@subsection RawModeGuard RAII 类
+
+@code{RawModeGuard} 是一个 RAII（资源获取即初始化）辅助类，用于自动管理原始模式的生命周期。
+
+@deftp {类} Keyboard::RawModeGuard
+原始模式守卫类，在构造时自动启用原始模式，在析构时自动禁用原始模式。
+
+此类不可复制，确保资源管理的唯一性。
+
+@subheading 构造函数
+
+@deftypefn {构造函数} RawModeGuard::RawModeGuard ()
+构造函数，自动调用 @code{Keyboard::setRawMode(true)} 启用原始模式。
+@end deftypefn
+
+@subheading 析构函数
+
+@deftypefn {析构函数} RawModeGuard::~RawModeGuard ()
+析构函数，自动调用 @code{Keyboard::setRawMode(false)} 禁用原始模式。
+@end deftypefn
+
+@subheading 复制控制
+
+@deftypefn {删除} RawModeGuard::RawModeGuard (const RawModeGuard&) = delete
+删除复制构造函数。
+@end deftypefn
+
+@deftypefn {删除} RawModeGuard& RawModeGuard::operator= (const RawModeGuard&) = delete
+删除复制赋值运算符。
+@end deftypefn
+@end deftp
+
+使用 @code{RawModeGuard} 可以确保即使在发生异常时，原始模式也能被正确关闭：
+
+@example
+#include "termtools.h"
+#include <iostream>
+using namespace termtools;
+
+int main() @{
+    Console console;
+    console.println("键盘演示程序");
+    console.println("按 'q' 退出");
+    
+    @{
+        Keyboard::RawModeGuard guard;  // 自动启用原始模式
+        
+        while (true) @{
+            Keyboard::KeyEvent event = Keyboard::readKey();
+            
+            std::cout << "按键: " << Keyboard::keyToString(event.key);
+            if (event.ch != '\0') @{
+                std::cout << " | 字符: '" << event.ch << "'";
+            @}
+            if (event.ctrl) std::cout << " | Ctrl";
+            if (event.alt) std::cout << " | Alt";
+            if (event.shift) std::cout << " | Shift";
+            std::cout << std::endl;
+            
+            if (event.ch == 'q') @{
+                break;
+            @}
+        @}
+    @}  // guard 析构，自动禁用原始模式
+    
+    console.println("程序结束");
+    return 0;
+@}
+@end example
+
+@subsection 完整示例
+
+以下是一个完整的交互式键盘演示程序：
+
+@example
+#include "termtools.h"
+#include <iostream>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    console.println("=== 键盘输入演示 ===");
+    console.println();
+    console.println("按键说明:");
+    console.println("  方向键: 移动光标");
+    console.println("  F1-F12: 功能键测试");
+    console.println("  Ctrl+C: 显示组合键");
+    console.println("  q/Q: 退出程序");
+    console.println();
+    
+    Keyboard::RawModeGuard guard;
+    
+    int x = 0, y = 0;
+    
+    while (true) @{
+        Keyboard::KeyEvent event = Keyboard::readKey(true);
+        
+        switch (event.key) @{
+            case Keyboard::Key::Up:
+                y--;
+                std::cout << "上移: (" << x << ", " << y << ")" << std::endl;
+                break;
+            case Keyboard::Key::Down:
+                y++;
+                std::cout << "下移: (" << x << ", " << y << ")" << std::endl;
+                break;
+            case Keyboard::Key::Left:
+                x--;
+                std::cout << "左移: (" << x << ", " << y << ")" << std::endl;
+                break;
+            case Keyboard::Key::Right:
+                x++;
+                std::cout << "右移: (" << x << ", " << y << ")" << std::endl;
+                break;
+            case Keyboard::Key::Escape:
+                std::cout << "按下了 Esc 键" << std::endl;
+                break;
+            case Keyboard::Key::Enter:
+                std::cout << "按下了回车键" << std::endl;
+                break;
+            case Keyboard::Key::Tab:
+                std::cout << "按下了 Tab 键" << std::endl;
+                break;
+            case Keyboard::Key::Backspace:
+                std::cout << "按下了退格键" << std::endl;
+                break;
+            case Keyboard::Key::Delete:
+                std::cout << "按下了 Delete 键" << std::endl;
+                break;
+            case Keyboard::Key::Home:
+                std::cout << "按下了 Home 键" << std::endl;
+                break;
+            case Keyboard::Key::End:
+                std::cout << "按下了 End 键" << std::endl;
+                break;
+            case Keyboard::Key::PageUp:
+                std::cout << "按下了 Page Up 键" << std::endl;
+                break;
+            case Keyboard::Key::PageDown:
+                std::cout << "按下了 Page Down 键" << std::endl;
+                break;
+            default:
+                if (event.key >= Keyboard::Key::F1 && event.key <= Keyboard::Key::F12) @{
+                    std::cout << "按下了 " << Keyboard::keyToString(event.key) << std::endl;
+                @} else if (event.ch != '\0') @{
+                    if (event.ctrl && event.ch == 'c') @{
+                        std::cout << "检测到 Ctrl+C 组合键" << std::endl;
+                    @} else if (event.ch == 'q' || event.ch == 'Q') @{
+                        std::cout << "退出程序..." << std::endl;
+                        return 0;
+                    @} else @{
+                        std::cout << "按下了字符: '" << event.ch << "'";
+                        if (event.ctrl) std::cout << " [Ctrl]";
+                        if (event.alt) std::cout << " [Alt]";
+                        if (event.shift) std::cout << " [Shift]";
+                        std::cout << std::endl;
+                    @}
+                @} else @{
+                    std::cout << "未知按键: " << Keyboard::keyToString(event.key) << std::endl;
+                @}
+                break;
+        @}
+    @}
+    
+    return 0;
+@}
+@end example
+
+@subsection 使用回调的示例
+
+@example
+#include "termtools.h"
+#include <iostream>
+#include <atomic>
+#include <thread>
+
+using namespace termtools;
+
+std::atomic<bool> running(true);
+
+int main() @{
+    Console console;
+    console.println("=== 回调模式演示 ===");
+    console.println("按 Esc 退出");
+    console.println();
+    
+    Keyboard::setRawMode(true);
+    
+    Keyboard::onKeyEvent([](const Keyboard::KeyEvent& event) @{
+        static int keyCount = 0;
+        keyCount++;
+        
+        std::cout << "[" << keyCount << "] ";
+        
+        if (event.key != Keyboard::Key::Unknown) @{
+            std::cout << Keyboard::keyToString(event.key);
+        @} else if (event.ch != '\0') @{
+            std::cout << "字符: " << event.ch;
+        @}
+        
+        std::cout << " (Ctrl:" << (event.ctrl ? "Y" : "N")
+                  << " Alt:" << (event.alt ? "Y" : "N")
+                  << " Shift:" << (event.shift ? "Y" : "N") << ")"
+                  << std::endl;
+        
+        if (event.key == Keyboard::Key::Escape) @{
+            running = false;
+            Keyboard::stopKeyLoop();
+        @}
+    @});
+    
+    Keyboard::startKeyLoop();
+    
+    Keyboard::setRawMode(false);
+    console.println("程序结束");
+    
+    return 0;
+@}
+@end example
+
+@subsection 注意事项
+
+@itemize
+@item 使用键盘功能前必须先启用原始模式，可通过 @code{setRawMode(true)} 或 @code{RawModeGuard} 实现。
+@item 程序退出前应确保禁用原始模式，否则终端可能处于异常状态。
+@item 推荐使用 @code{RawModeGuard} RAII 类自动管理原始模式生命周期。
+@item 修饰键（Ctrl、Alt、Shift）的检测依赖于终端的支持，不同终端可能存在差异。
+@item 在 Windows 和 Unix-like 系统上，原始模式的实现方式不同，但 API 保持一致。
+@end itemize

@@ -8,7 +8,8 @@ int main() {
     console.println("=== Prompt Demo ===");
     console.println();
     
-    std::string name = Prompt::ask("What is your name?");
+    auto nameResult = Prompt::ask("What is your name?");
+    std::string name = nameResult.ok() ? nameResult.value() : "Anonymous";
     console.println("Hello, " + name + "!");
     
     console.println();
@@ -22,14 +23,20 @@ int main() {
     
     console.println();
     
-    int age = Prompt::askInt("How old are you?", INT_MIN, 0, 150);
-    console.println("You are " + std::to_string(age) + " years old.");
+    auto ageOpt = Prompt::askInt("How old are you?", std::nullopt, 0, 150);
+    if (ageOpt) {
+        console.println("You are " + std::to_string(*ageOpt) + " years old.");
+    } else {
+        console.println("Invalid age input.");
+    }
     
     console.println();
     
     std::vector<std::string> choices = {"Option A", "Option B", "Option C"};
-    std::string choice = Prompt::askChoice("Select an option", choices);
-    console.println("You selected: " + choice);
+    std::string choice = Prompt::askChoiceValue("Select an option", choices);
+    if (!choice.empty()) {
+        console.println("You selected: " + choice);
+    }
     
     return 0;
 }

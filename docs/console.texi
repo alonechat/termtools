@@ -1,0 +1,852 @@
+@node Console
+@section Console
+
+@code{Console} 类是 TermTools 库的核心组件，提供了丰富的终端输出和控制功能。
+该类封装了标准输出流操作，支持格式化输出、光标控制、屏幕清理以及终端属性查询等功能。
+
+@menu
+* Console 类概述::            Console 类的基本介绍和构造函数。
+* 输出方法::                  文本输出相关的方法。
+* 光标控制方法::              光标移动和显示控制方法。
+* 屏幕清理方法::              清屏和清行方法。
+* 终端属性查询::              查询终端尺寸和支持特性。
+* 输出缓冲控制::              缓冲区管理方法。
+* 标准输出与错误流::          获取标准输出和错误流的静态方法。
+@end menu
+
+@node Console 类概述
+@subsection Console 类概述
+
+@code{Console} 类定义在头文件 @file{termtools/core/console.h} 中，
+位于 @code{termtools} 命名空间下。该类提供了对终端输出的高级抽象，
+支持自动检测终端特性（如颜色支持和 Unicode 支持）以及输出缓冲管理。
+
+@subheading 类定义
+
+@example
+#include <termtools/core/console.h>
+
+namespace termtools @{
+class Console @{
+public:
+    Console();
+    explicit Console(std::ostream &stream);
+    ~Console();
+    
+    // 输出方法
+    void print(const std::string &text);
+    void print(const Text &text);
+    void print(const char *format, ...);
+    void println(const std::string &text = "");
+    void println(const Text &text);
+    template <typename... Args> void printf(const char *format, Args &&...args);
+    
+    // 光标控制方法
+    void moveCursor(int row, int col);
+    void moveCursorUp(int lines);
+    void moveCursorDown(int lines);
+    void moveCursorLeft(int cols);
+    void moveCursorRight(int cols);
+    void showCursor(bool show = true);
+    void saveCursor();
+    void restoreCursor();
+    
+    // 屏幕清理方法
+    void clear();
+    void clearLine();
+    
+    // 终端属性查询
+    int getTerminalWidth() const;
+    int getTerminalHeight() const;
+    bool isColorSupported() const;
+    bool isUnicodeSupported() const;
+    
+    // 输出缓冲控制
+    void setBuffering(bool enabled);
+    bool isBuffering() const;
+    void flush();
+    
+    // 静态工厂方法
+    static Console &getStdout();
+    static Console &getStderr();
+@};
+@}
+@end example
+
+@subheading 构造函数
+
+@table @code
+@item Console()
+默认构造函数。创建一个绑定到标准输出流 @code{std::cout} 的 Console 对象。
+该构造函数会自动检测终端的颜色支持和 Unicode 支持能力。
+
+@example
+termtools::Console console;  // 绑定到 std::cout
+console.println("Hello, World!");
+@end example
+
+@item explicit Console(std::ostream &stream)
+带参数的构造函数。创建一个绑定到指定输出流的 Console 对象。
+可用于将输出重定向到文件或其他流。
+
+@example
+std::ofstream file("output.txt");
+termtools::Console fileConsole(file);
+fileConsole.println("This goes to a file");
+@end example
+@end table
+
+@node 输出方法
+@subsection 输出方法
+
+Console 类提供了多种输出方法，支持字符串、@code{Text} 对象以及格式化输出。
+
+@subheading print 方法
+
+@table @code
+@item void print(const std::string &text)
+输出字符串内容到绑定的输出流。如果启用了缓冲（默认启用），
+内容会先写入内部缓冲区，当缓冲区大小超过阈值时自动刷新。
+
+@example
+termtools::Console console;
+console.print("Hello, ");
+console.print("World!");
+console.flush();  // 确保内容已输出
+@end example
+
+@item void print(const Text &text)
+输出 @code{Text} 对象到绑定的输出流。@code{Text} 对象可以包含样式和颜色信息。
+参见 @xref{Text,,Text,text,TermTools Text Processing} 了解更多关于 Text 类的信息。
+
+@example
+termtools::Console console;
+termtools::Text styledText("Colored text");
+styledText.colored(termtools::Color(termtools::ColorName::Red));
+console.print(styledText);
+@end example
+
+@item void print(const char *format, ...)
+使用 C 风格格式化字符串输出内容。支持 @code{printf} 风格的格式说明符。
+
+@example
+termtools::Console console;
+console.print("Name: %s, Age: %d", "Alice", 25);
+@end example
+@end table
+
+@subheading println 方法
+
+@table @code
+@item void println(const std::string &text = "")
+输出字符串内容并追加换行符。如果不提供参数，则仅输出换行符。
+
+@example
+termtools::Console console;
+console.println("First line");
+console.println("Second line");
+console.println();  // 输出空行
+@end example
+
+@item void println(const Text &text)
+输出 @code{Text} 对象并追加换行符。
+
+@example
+termtools::Console console;
+termtools::Text header("Section Title");
+header.styled(termtools::StyleBuilder().bold().underline());
+console.println(header);
+@end example
+@end table
+
+@subheading printf 模板方法
+
+@table @code
+@item template <typename... Args> void printf(const char *format, Args &&...args)
+类型安全的格式化输出方法。使用 C++11 可变参数模板实现，
+比 C 风格的 @code{print(const char*, ...)} 更加类型安全。
+
+@example
+termtools::Console console;
+std::string name = "Bob";
+int score = 95;
+double average = 87.5;
+console.printf("Player: %s, Score: %d, Average: %.2f\n", name, score, average);
+@end example
+@end table
+
+@subheading 综合示例
+
+以下示例展示了各种输出方法的使用：
+
+@example
+#include <termtools.h>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    // 基本字符串输出
+    console.println("=== 输出方法示例 ===");
+    
+    // 使用 print 输出多个部分
+    console.print("项目名称: ");
+    console.println("TermTools");
+    
+    // 格式化输出
+    console.print("版本: %d.%d.%d\n", 1, 0, 0);
+    
+    // 使用 Text 对象输出带样式的内容
+    Text success("操作成功完成！");
+    success.colored(Color(ColorName::Green));
+    console.println(success);
+    
+    // 使用 printf 模板方法
+    int files = 42;
+    int dirs = 7;
+    console.printf("共处理 %d 个文件和 %d 个目录\n", files, dirs);
+    
+    return 0;
+@}
+@end example
+
+@node 光标控制方法
+@subsection 光标控制方法
+
+Console 类提供了一组光标控制方法，用于在终端中移动光标位置和控制光标显示状态。
+这些方法使用 ANSI 转义序列实现，在支持 ANSI 转义序列的终端中有效。
+
+@subheading 光标移动方法
+
+@table @code
+@item void moveCursor(int row, int col)
+将光标移动到指定的行列位置。行和列的索引从 1 开始。
+
+@example
+termtools::Console console;
+console.clear();
+console.moveCursor(5, 10);  // 移动到第 5 行第 10 列
+console.print("Position (5, 10)");
+@end example
+
+@item void moveCursorUp(int lines)
+将光标向上移动指定行数。如果 @var{lines} 小于等于 0，则不执行任何操作。
+
+@example
+termtools::Console console;
+console.println("Line 1");
+console.println("Line 2");
+console.println("Line 3");
+console.moveCursorUp(2);  // 向上移动 2 行
+console.print("Modified");  // 覆盖 "Line 2"
+@end example
+
+@item void moveCursorDown(int lines)
+将光标向下移动指定行数。如果 @var{lines} 小于等于 0，则不执行任何操作。
+
+@example
+termtools::Console console;
+console.print("Start here");
+console.moveCursorDown(3);  // 向下移动 3 行
+console.println("Three lines below");
+@end example
+
+@item void moveCursorLeft(int cols)
+将光标向左移动指定列数。如果 @var{cols} 小于等于 0，则不执行任何操作。
+
+@example
+termtools::Console console;
+console.print("Hello World");
+console.moveCursorLeft(5);  // 向左移动 5 列
+console.print("-----");     // 覆盖 "World"
+@end example
+
+@item void moveCursorRight(int cols)
+将光标向右移动指定列数。如果 @var{cols} 小于等于 0，则不执行任何操作。
+
+@example
+termtools::Console console;
+console.print("A");
+console.moveCursorRight(5);  // 向右移动 5 列
+console.print("B");          // 输出 "A     B"
+@end example
+@end table
+
+@subheading 光标显示控制方法
+
+@table @code
+@item void showCursor(bool show = true)
+控制光标的显示状态。传入 @code{true} 显示光标，传入 @code{false} 隐藏光标。
+
+@example
+termtools::Console console;
+console.showCursor(false);  // 隐藏光标
+// 执行一些动画或进度显示
+console.showCursor(true);   // 恢复光标显示
+@end example
+
+@item void saveCursor()
+保存当前光标位置。可与 @code{restoreCursor()} 配合使用，
+在执行临时输出后恢复光标位置。
+
+@example
+termtools::Console console;
+console.saveCursor();       // 保存当前位置
+console.moveCursor(1, 1);   // 移动到左上角
+console.print("Status: OK");
+console.restoreCursor();    // 恢复到保存的位置
+@end example
+
+@item void restoreCursor()
+恢复之前保存的光标位置。必须先调用 @code{saveCursor()} 保存位置。
+
+@example
+termtools::Console console;
+console.println("Main content area");
+console.saveCursor();
+console.moveCursor(10, 50);
+console.print("Sidebar");
+console.restoreCursor();  // 返回到主内容区域
+@end example
+@end table
+
+@subheading 综合示例
+
+以下示例展示了光标控制方法的综合应用，实现一个简单的状态栏显示：
+
+@example
+#include <termtools.h>
+#include <chrono>
+#include <thread>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    console.clear();
+    console.showCursor(false);
+    
+    // 在顶部显示标题
+    console.moveCursor(1, 1);
+    Text title("=== 系统监控 ===");
+    title.styled(StyleBuilder().bold().color(Color(ColorName::Cyan)));
+    console.println(title);
+    
+    // 模拟实时更新状态栏
+    for (int i = 0; i <= 100; i += 10) @{
+        console.saveCursor();
+        
+        // 更新进度
+        console.moveCursor(3, 1);
+        console.clearLine();
+        console.printf("进度: %d%%", i);
+        
+        // 更新状态指示器
+        console.moveCursor(3, 30);
+        Text status(i < 100 ? "运行中..." : "完成！");
+        status.colored(Color(i < 100 ? ColorName::Yellow : ColorName::Green));
+        console.print(status);
+        
+        console.restoreCursor();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    @}
+    
+    console.showCursor(true);
+    console.println("\n监控结束");
+    
+    return 0;
+@}
+@end example
+
+@node 屏幕清理方法
+@subsection 屏幕清理方法
+
+Console 类提供了屏幕清理方法，用于清除屏幕内容或当前行内容。
+
+@table @code
+@item void clear()
+清除整个屏幕内容，并将光标移动到屏幕左上角（第 1 行第 1 列）。
+
+@example
+termtools::Console console;
+console.clear();  // 清屏
+console.println("Fresh start!");
+@end example
+
+@item void clearLine()
+清除当前行的内容。光标保持在当前行的开头位置。
+
+@example
+termtools::Console console;
+console.print("Loading...");
+// 执行一些操作后更新状态
+console.clearLine();
+console.print("Done!");
+@end example
+@end table
+
+@subheading 综合示例
+
+以下示例展示了清屏方法的典型应用场景：
+
+@example
+#include <termtools.h>
+#include <chrono>
+#include <thread>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    console.clear();
+    console.println("=== 动态状态更新示例 ===");
+    console.println();
+    
+    // 模拟加载过程
+    console.print("正在初始化系统...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    
+    console.clearLine();
+    console.print("正在加载配置...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    
+    console.clearLine();
+    console.print("正在连接数据库...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    
+    console.clearLine();
+    Text success("系统启动完成！");
+    success.colored(Color(ColorName::Green));
+    console.println(success);
+    
+    return 0;
+@}
+@end example
+
+@node 终端属性查询
+@subsection 终端属性查询
+
+Console 类提供了查询终端属性的方法，包括终端尺寸和支持的特性。
+
+@subheading 终端尺寸查询
+
+@table @code
+@item int getTerminalWidth() const
+返回终端的宽度（以字符列数为单位）。如果无法获取终端宽度，返回默认值。
+
+@example
+termtools::Console console;
+int width = console.getTerminalWidth();
+console.printf("终端宽度: %d 列\n", width);
+
+// 居中文本
+Text centered("居中显示的文本");
+centered.align(Justify::Center, width);
+console.println(centered);
+@end example
+
+@item int getTerminalHeight() const
+返回终端的高度（以字符行数为单位）。如果无法获取终端高度，返回默认值。
+
+@example
+termtools::Console console;
+int height = console.getTerminalHeight();
+console.printf("终端高度: %d 行\n", height);
+@end example
+@end table
+
+@subheading 终端特性查询
+
+@table @code
+@item bool isColorSupported() const
+检测终端是否支持彩色输出。返回 @code{true} 表示支持彩色输出。
+
+@example
+termtools::Console console;
+if (console.isColorSupported()) @{
+    Text colored("彩色文本");
+    colored.colored(Color(ColorName::Magenta));
+    console.println(colored);
+@} else @{
+    console.println("彩色文本（无颜色支持）");
+@}
+@end example
+
+@item bool isUnicodeSupported() const
+检测终端是否支持 Unicode 字符。返回 @code{true} 表示支持 Unicode。
+
+@example
+termtools::Console console;
+if (console.isUnicodeSupported()) @{
+    console.println("Unicode 符号: ★ ✓ ✗ → ←");
+    console.println("中文支持: 你好世界");
+@} else @{
+    console.println("ASCII only: * v x -> <-");
+@}
+@end example
+@end table
+
+@subheading 综合示例
+
+以下示例展示了如何根据终端特性自适应调整输出：
+
+@example
+#include <termtools.h>
+
+using namespace termtools;
+
+void printBanner(Console &console) @{
+    int width = console.getTerminalWidth();
+    
+    Text banner("TermTools Console Demo");
+    banner.styled(StyleBuilder().bold());
+    
+    if (console.isColorSupported()) @{
+        banner.colored(Color(ColorName::Cyan));
+    @}
+    
+    banner.align(Justify::Center, width);
+    console.println(banner);
+    
+    // 打印分隔线
+    std::string separator(width, '-');
+    console.println(separator);
+@}
+
+void printSystemInfo(Console &console) @{
+    console.println("\n=== 终端信息 ===");
+    console.printf("终端尺寸: %d x %d\n", 
+                   console.getTerminalWidth(), 
+                   console.getTerminalHeight());
+    console.printf("颜色支持: %s\n", 
+                   console.isColorSupported() ? "是" : "否");
+    console.printf("Unicode 支持: %s\n", 
+                   console.isUnicodeSupported() ? "是" : "否");
+@}
+
+int main() @{
+    Console console;
+    console.clear();
+    
+    printBanner(console);
+    printSystemInfo(console);
+    
+    return 0;
+@}
+@end example
+
+@node 输出缓冲控制
+@subsection 输出缓冲控制
+
+Console 类支持输出缓冲机制，可以提高大量小输出操作的性能。
+默认情况下，缓冲是启用的。
+
+@table @code
+@item void setBuffering(bool enabled)
+启用或禁用输出缓冲。传入 @code{true} 启用缓冲，传入 @code{false} 禁用缓冲。
+禁用缓冲时，会自动刷新当前缓冲区中的内容。
+
+@example
+termtools::Console console;
+console.setBuffering(false);  // 禁用缓冲，立即输出
+console.print("This appears immediately");
+
+console.setBuffering(true);   // 重新启用缓冲
+console.print("This is buffered");
+console.flush();              // 手动刷新
+@end example
+
+@item bool isBuffering() const
+返回当前缓冲状态。@code{true} 表示缓冲已启用，@code{false} 表示缓冲已禁用。
+
+@example
+termtools::Console console;
+if (console.isBuffering()) @{
+    console.println("缓冲已启用");
+@} else @{
+    console.println("缓冲已禁用");
+@}
+@end example
+
+@item void flush()
+刷新缓冲区，将所有缓冲的内容写入输出流。即使缓冲已禁用，调用此方法也是安全的。
+
+@example
+termtools::Console console;
+console.print("Part 1");
+console.print("Part 2");
+console.print("Part 3");
+console.flush();  // 确保所有内容都已输出
+@end example
+@end table
+
+@subheading 缓冲机制说明
+
+Console 类使用内部缓冲区（默认大小为 8192 字节）来存储待输出的内容。
+当缓冲区满或调用 @code{flush()} 方法时，内容会被写入实际的输出流。
+
+缓冲机制的优势：
+@itemize @bullet
+@item 减少系统调用次数，提高性能
+@item 减少终端刷新频率，避免闪烁
+@item 支持批量输出操作的原子性
+@end itemize
+
+@subheading 综合示例
+
+以下示例展示了缓冲控制的典型应用场景：
+
+@example
+#include <termtools.h>
+#include <vector>
+#include <chrono>
+#include <thread>
+
+using namespace termtools;
+
+void demonstrateBuffering(Console &console) @{
+    console.println("\n=== 缓冲控制示例 ===");
+    
+    // 禁用缓冲 - 实时输出
+    console.println("\n禁用缓冲模式（实时输出）:");
+    console.setBuffering(false);
+    
+    for (int i = 1; i <= 5; ++i) @{
+        console.printf("[%d] ", i);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    @}
+    console.println();
+    
+    // 启用缓冲 - 批量输出
+    console.println("\n启用缓冲模式（批量输出）:");
+    console.setBuffering(true);
+    
+    for (int i = 1; i <= 5; ++i) @{
+        console.printf("[%d] ", i);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    @}
+    console.flush();  // 一次性输出所有内容
+    console.println();
+@}
+
+int main() @{
+    Console console;
+    console.clear();
+    
+    console.println("缓冲状态: " + std::string(console.isBuffering() ? "启用" : "禁用"));
+    demonstrateBuffering(console);
+    
+    // 恢复默认设置
+    console.setBuffering(true);
+    
+    return 0;
+@}
+@end example
+
+@node 标准输出与错误流
+@subsection 标准输出与错误流
+
+Console 类提供了两个静态工厂方法，用于获取绑定到标准输出和标准错误流的单例 Console 对象。
+
+@table @code
+@item static Console &getStdout()
+返回绑定到标准输出流 @code{std::cout} 的 Console 单例对象。
+该对象在整个程序生命周期内保持唯一。
+
+@example
+termtools::Console &stdout = termtools::Console::getStdout();
+stdout.println("This goes to standard output");
+@end example
+
+@item static Console &getStderr()
+返回绑定到标准错误流 @code{std::cerr} 的 Console 单例对象。
+该对象在整个程序生命周期内保持唯一。
+
+@example
+termtools::Console &stderr = termtools::Console::getStderr();
+Text error("Error: Something went wrong!");
+error.colored(termtools::Color(termtools::ColorName::Red));
+stderr.println(error);
+@end example
+@end table
+
+@subheading 使用场景
+
+使用单例模式获取 Console 对象的优势：
+@itemize @bullet
+@item 避免重复创建对象，节省资源
+@item 全局统一的输出入口，便于管理
+@item 支持跨模块共享同一个 Console 实例
+@end itemize
+
+@subheading 综合示例
+
+以下示例展示了标准输出和错误流的典型用法：
+
+@example
+#include <termtools.h>
+
+using namespace termtools;
+
+void logInfo(const std::string &message) @{
+    Console &out = Console::getStdout();
+    Text info("[INFO] " + message);
+    info.colored(Color(ColorName::Green));
+    out.println(info);
+@}
+
+void logError(const std::string &message) @{
+    Console &err = Console::getStderr();
+    Text error("[ERROR] " + message);
+    error.colored(Color(ColorName::Red));
+    err.println(error);
+@}
+
+void logWarning(const std::string &message) @{
+    Console &out = Console::getStdout();
+    Text warning("[WARNING] " + message);
+    warning.colored(Color(ColorName::Yellow));
+    out.println(warning);
+@}
+
+int main() @{
+    Console &console = Console::getStdout();
+    
+    console.clear();
+    console.println("=== 日志系统示例 ===\n");
+    
+    logInfo("应用程序启动成功");
+    logInfo("正在加载配置文件");
+    logWarning("配置文件使用默认值");
+    logInfo("连接数据库成功");
+    logError("无法连接到远程服务器");
+    logInfo("应用程序继续运行");
+    
+    console.println("\n日志输出完成");
+    
+    return 0;
+@}
+@end example
+
+@subheading 输出重定向示例
+
+由于标准输出和标准错误使用不同的 Console 实例，
+可以方便地进行输出重定向：
+
+@example
+// 运行程序时可以这样重定向：
+// ./program > output.log 2> error.log
+
+#include <termtools.h>
+
+using namespace termtools;
+
+int main() @{
+    Console &out = Console::getStdout();
+    Console &err = Console::getStderr();
+    
+    out.println("这条消息会写入 output.log");
+    err.println("这条消息会写入 error.log");
+    
+    return 0;
+@}
+@end example
+
+@subheading 完整示例程序
+
+以下是一个综合展示 Console 类所有主要功能的完整示例：
+
+@example
+#include <termtools.h>
+#include <chrono>
+#include <thread>
+
+using namespace termtools;
+
+void demonstrateOutput(Console &console) @{
+    console.println("\n=== 输出方法演示 ===");
+    
+    // 基本输出
+    console.print("基本字符串输出");
+    console.println(" - 带换行");
+    
+    // 格式化输出
+    console.printf("格式化输出: 整数=%d, 浮点=%.2f\n", 42, 3.14159);
+    
+    // 带样式的输出
+    Text styled("带颜色和样式的文本");
+    styled.styled(StyleBuilder().bold().underline());
+    styled.colored(Color(ColorName::Cyan));
+    console.println(styled);
+@}
+
+void demonstrateCursor(Console &console) @{
+    console.println("\n=== 光标控制演示 ===");
+    
+    console.saveCursor();
+    console.println("原始位置");
+    
+    console.moveCursorUp(1);
+    console.moveCursorRight(20);
+    console.print("<- 移动后的位置");
+    
+    console.restoreCursor();
+    console.println();  // 换行以便后续输出
+@}
+
+void demonstrateClear(Console &console) @{
+    console.println("\n=== 清屏演示 ===");
+    console.print("这行将在 1 秒后被清除...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    console.clearLine();
+    console.println("已清除并替换为新内容！");
+@}
+
+void demonstrateTerminalInfo(Console &console) @{
+    console.println("\n=== 终端信息 ===");
+    console.printf("终端尺寸: %d 列 x %d 行\n", 
+                   console.getTerminalWidth(), 
+                   console.getTerminalHeight());
+    console.printf("颜色支持: %s\n", 
+                   console.isColorSupported() ? "是" : "否");
+    console.printf("Unicode 支持: %s\n", 
+                   console.isUnicodeSupported() ? "是" : "否");
+@}
+
+void demonstrateBuffering(Console &console) @{
+    console.println("\n=== 缓冲控制演示 ===");
+    
+    console.setBuffering(true);
+    console.print("缓冲内容 1 ");
+    console.print("缓冲内容 2 ");
+    console.print("缓冲内容 3 ");
+    console.flush();
+    console.println("（已刷新）");
+@}
+
+int main() @{
+    Console &console = Console::getStdout();
+    
+    console.clear();
+    
+    // 标题
+    Text title("TermTools Console 完整演示");
+    title.styled(StyleBuilder().bold());
+    title.colored(Color(ColorName::Magenta));
+    title.align(Justify::Center, console.getTerminalWidth());
+    console.println(title);
+    
+    demonstrateOutput(console);
+    demonstrateCursor(console);
+    demonstrateClear(console);
+    demonstrateTerminalInfo(console);
+    demonstrateBuffering(console);
+    
+    console.println("\n演示结束！");
+    
+    return 0;
+@}
+@end example

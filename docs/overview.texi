@@ -1,0 +1,632 @@
+@node Overview
+@section TermTools 概述
+
+TermTools 是一个现代化的 C++ 终端用户界面组件库，其设计灵感来源于 Python 的 Rich 库。本库提供了丰富的终端输出功能，包括彩色文本、样式化输出、表格渲染、进度条、日志记录、交互式提示以及 Markdown 渲染等功能。TermTools 旨在为 C++ 开发者提供一套简洁、直观且功能强大的终端输出解决方案。
+
+@subsection 设计理念
+
+TermTools 的设计遵循以下核心理念：
+
+@itemize @bullet
+@item
+@strong{简洁易用}：提供直观的 API 设计，让开发者能够快速上手并高效使用。所有组件都采用链式调用风格，支持流式编程范式。
+
+@item
+@strong{跨平台兼容}：完全支持 Windows、Linux 和 macOS 三大主流操作系统，自动处理平台差异，确保一致的输出效果。
+
+@item
+@strong{现代 C++}：充分利用 C++17 特性，包括结构化绑定、std::optional、std::string_view 等，提供类型安全和高效的实现。
+
+@item
+@strong{Unicode 原生支持}：完善的 UTF-8 编码支持，正确处理中文、日文等多字节字符的显示宽度计算。
+
+@item
+@strong{模块化架构}：各功能模块独立且可组合使用，开发者可以按需引入所需组件，避免不必要的依赖开销。
+@end itemize
+
+@subsection 完整功能列表
+
+TermTools 提供以下主要功能模块：
+
+@subsubheading 颜色支持 (Color Support)
+
+TermTools 支持三种颜色模式：
+
+@itemize @bullet
+@item
+@strong{16 色标准模式}：支持标准 ANSI 16 色，包括 8 种基本色和 8 种高亮色。通过 @code{ColorName} 枚举可以方便地指定颜色。
+
+@item
+@strong{256 色扩展模式}：支持 256 色终端扩展色板，提供更丰富的颜色选择。
+
+@item
+@strong{真彩色模式}：支持 24 位 RGB 真彩色，可精确指定任意颜色值（1670 万色）。
+@end itemize
+
+@xref{Color,,Color,color,TermTools Color System} 了解颜色系统的详细文档。
+
+@subsubheading 文本样式 (Text Styling)
+
+提供丰富的文本样式支持：
+
+@itemize @bullet
+@item
+@strong{基本样式}：粗体 (Bold)、斜体 (Italic)、下划线 (Underline)、闪烁 (Blink)
+@item
+@strong{高级样式}：暗淡 (Dim)、反转 (Reverse)、隐藏 (Hidden)、删除线 (Strikethrough)
+@item
+@strong{样式组合}：通过 @code{StyleBuilder} 类可以灵活组合多种样式效果
+@end itemize
+
+@xref{Style,,Style,style,TermTools Text Style} 了解文本样式的详细文档。
+
+@subsubheading 表格组件 (Tables)
+
+功能完善的表格渲染系统：
+
+@itemize @bullet
+@item
+@strong{多种边框样式}：支持 ASCII、Unicode、UnicodeRounded、UnicodeDouble、Markdown、Dotted、Heavy 等多种边框风格
+@item
+@strong{灵活布局}：支持列对齐、自动宽度计算、手动宽度设置
+@item
+@strong{样式定制}：支持表头样式、斑马纹效果、行列高亮
+@item
+@strong{扩展功能}：支持标题、脚注、单元格合并等高级特性
+@end itemize
+
+@xref{Table,,Table,table,TermTools Table Component} 了解表格组件的详细文档。
+
+@subsubheading 进度条 (Progress Bars)
+
+专业的进度显示组件：
+
+@itemize @bullet
+@item
+@strong{多种动画样式}：支持 Dots、Line、Dots12、Arrow、SimpleDots 等旋转器样式
+@item
+@strong{实时信息}：显示百分比、已用时间、预估剩余时间
+@item
+@strong{自定义文本}：支持自定义描述文本、前缀和后缀
+@item
+@strong{颜色定制}：可自定义进度条颜色
+@end itemize
+
+@xref{Progress,,Progress,progress,TermTools Progress Bar} 了解进度条的详细文档。
+
+@subsubheading Markdown 渲染 (Markdown Rendering)
+
+内置 Markdown 解析和渲染支持：
+
+@itemize @bullet
+@item
+@strong{完整语法支持}：标题、段落、列表、代码块、引用、链接等
+@item
+@strong{样式主题}：提供默认主题、暗色主题、彩色主题等预设配置
+@item
+@strong{自定义配置}：可自定义各元素的颜色和样式
+@end itemize
+
+@xref{Markdown,,Markdown,markdown,TermTools Markdown Rendering} 了解 Markdown 渲染的详细文档。
+
+@subsubheading 日志系统 (Logging)
+
+结构化的日志输出系统：
+
+@itemize @bullet
+@item
+@strong{多级别支持}：Debug、Info、Warning、Error、Critical 五个日志级别
+@item
+@strong{彩色输出}：不同级别自动使用不同颜色区分
+@item
+@strong{格式定制}：支持自定义输出格式，可显示时间、级别、位置等信息
+@end itemize
+
+@xref{Logger,,Logger,logger,TermTools Logger System} 了解日志系统的详细文档。
+
+@subsubheading 交互式提示 (Interactive Prompts)
+
+丰富的用户输入功能：
+
+@itemize @bullet
+@item
+@strong{文本输入}：支持带默认值的文本输入
+@item
+@strong{确认对话框}：是/否确认提示
+@item
+@strong{数值输入}：带范围验证的整数和浮点数输入
+@item
+@strong{密码输入}：隐藏输入内容的密码输入
+@item
+@strong{选择列表}：单选和多选菜单
+@end itemize
+
+@xref{Prompt,,Prompt,prompt,TermTools Interactive Prompt} 了解交互式提示的详细文档。
+
+@subsubheading 键盘输入 (Keyboard Input)
+
+底层键盘事件处理：
+
+@itemize @bullet
+@item
+@strong{原始模式}：支持终端原始模式输入
+@item
+@item
+@strong{按键识别}：识别方向键、功能键 (F1-F12)、特殊键 (Home/End/PageUp/PageDown)
+@item
+@strong{组合键}：支持 Ctrl、Alt、Shift 组合键检测
+@item
+@strong{事件回调}：支持注册键盘事件回调函数
+@end itemize
+
+@xref{Keyboard,,Keyboard,keyboard,TermTools Keyboard Input} 了解键盘输入的详细文档。
+
+@subsubheading UTF-8 支持
+
+完善的 Unicode 支持：
+
+@itemize @bullet
+@item
+@strong{宽度计算}：正确计算东亚字符（中文、日文、韩文）的显示宽度
+@item
+@strong{Emoji 支持}：支持 Emoji 表情的显示
+@item
+@strong{编码检测}：自动检测终端的 Unicode 支持能力
+@end itemize
+
+@subsubheading 跨平台支持
+
+全面的平台兼容性：
+
+@itemize @bullet
+@item
+@strong{Windows}：完整支持 Windows 7 及以上版本，使用 Virtual Terminal 序列实现 ANSI 转义
+@item
+@strong{Linux}：支持所有主流 Linux 发行版
+@item
+@strong{macOS}：支持 macOS 10.13 及以上版本
+@end itemize
+
+@subsection 系统要求
+
+TermTools 对编译环境有以下要求：
+
+@subsubheading 编译器要求
+
+@itemize @bullet
+@item
+@strong{C++ 标准}：C++17 或更高版本
+@item
+@strong{GCC}：版本 7.0 或更高
+@item
+@strong{Clang}：版本 5.0 或更高
+@item
+@strong{MSVC}：Visual Studio 2017 15.7 或更高
+@end itemize
+
+@subsubheading 构建工具要求
+
+@itemize @bullet
+@item
+@strong{CMake}：版本 3.14 或更高
+@item
+@strong{Make} 或 @strong{Ninja}：推荐使用 Ninja 以获得更快的构建速度
+@end itemize
+
+@subsubheading 操作系统要求
+
+@itemize @bullet
+@item
+@strong{Windows}：Windows 7 SP1 或更高版本
+@item
+@strong{Linux}：任何支持 glibc 2.17+ 的发行版
+@item
+@strong{macOS}：macOS 10.13 (High Sierra) 或更高版本
+@end itemize
+
+@subsection 安装与构建指南
+
+@subsubheading 获取源代码
+
+@example
+git clone https://github.com/yourusername/termtools.git
+cd termtools
+@end example
+
+@subsubheading 使用 CMake 构建
+
+TermTools 使用 CMake 作为构建系统。以下是标准的构建流程：
+
+@example
+# 创建构建目录
+mkdir build
+cd build
+
+# 配置项目
+cmake ..
+
+# 编译
+cmake --build .
+@end example
+
+@subsubheading 构建选项
+
+TermTools 提供以下 CMake 构建选项：
+
+@table @code
+@item TERMTOOLS_BUILD_EXAMPLES
+构建示例程序（默认：ON）
+@item TERMTOOLS_BUILD_TESTS
+构建测试程序（默认：ON）
+@item TERMTOOLS_INSTALL
+生成安装目标（默认：ON）
+@end table
+
+可以通过以下方式自定义构建选项：
+
+@example
+cmake -DTERMTOOLS_BUILD_EXAMPLES=ON \
+      -DTERMTOOLS_BUILD_TESTS=ON \
+      -DTERMTOOLS_INSTALL=ON \
+      ..
+@end example
+
+@subsubheading 安装到系统
+
+构建完成后，可以安装到系统目录：
+
+@example
+# 安装到默认位置（通常需要管理员权限）
+sudo cmake --install .
+
+# 或指定安装前缀
+cmake --install . --prefix /usr/local
+@end example
+
+@subsubheading 在项目中使用 TermTools
+
+方式一：作为子目录集成
+
+@example
+# 在项目的 CMakeLists.txt 中添加
+add_subdirectory(termtools)
+target_link_libraries(your_target PRIVATE termtools)
+@end example
+
+方式二：作为已安装库使用
+
+@example
+# 在项目的 CMakeLists.txt 中添加
+find_package(termtools REQUIRED)
+target_link_libraries(your_target PRIVATE termtools)
+@end example
+
+@subsection 快速入门示例
+
+以下示例展示了 TermTools 的基本使用方法：
+
+@subsubheading 基本文本输出
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    // 创建带颜色的文本
+    Text text("Hello, TermTools!");
+    text.colored(Color(ColorName::Green));
+    console.println(text);
+    
+    // 创建带样式的文本
+    Text styled("Bold and Underlined");
+    styled.styled(StyleBuilder().bold().underline());
+    console.println(styled);
+    
+    // 使用 RGB 颜色
+    Text rgb("RGB Colored Text");
+    rgb.colored(Color(255, 100, 50));
+    console.println(rgb);
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 使用 Markup 标记
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    // 使用 Markup 语法创建样式化文本
+    Text markup = Text::fromMarkup(
+        "This is [bold]bold[/bold], "
+        "[red]red[/red], and "
+        "[underline]underlined[/underline] text!"
+    );
+    console.println(markup);
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 创建表格
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Table table;
+    table.addColumn("ID")
+         .addColumn("Name")
+         .addColumn("Status")
+         .addColumn("Progress");
+    
+    table.addRow(@{"1", "Task Alpha", "Running", "75%"@});
+    table.addRow(@{"2", "Task Beta", "Completed", "100%"@});
+    table.addRow(@{"3", "Task Gamma", "Pending", "0%"@});
+    
+    table.setHeaderColor(Color(ColorName::Cyan));
+    table.setZebraStripes(true);
+    table.print(console);
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 进度条使用
+
+@example
+#include "termtools.h"
+#include <chrono>
+#include <thread>
+
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    ProgressBar progress(100, "Processing items", console);
+    progress.start();
+    
+    for (int i = 0; i < 100; ++i) @{
+        progress.update(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    @}
+    
+    progress.finish();
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 日志记录
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Console console;
+    Logger logger(console);
+    
+    logger.debug("This is a debug message");
+    logger.info("This is an info message");
+    logger.warning("This is a warning message");
+    logger.error("This is an error message");
+    logger.critical("This is a critical message");
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 交互式提示
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    // 文本输入
+    std::string name = Prompt::ask("What is your name?", "Guest");
+    
+    // 确认对话框
+    bool proceed = Prompt::confirm("Do you want to continue?", true);
+    
+    // 数值输入
+    int age = Prompt::askInt("Enter your age", 18, 1, 150);
+    
+    // 选择列表
+    std::string choice = Prompt::askChoice(
+        "Select your favorite color",
+        @{"Red", "Green", "Blue", "Yellow"@}
+    );
+    
+    return 0;
+@}
+@end example
+
+@subsubheading 面板组件
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    Console console;
+    
+    Panel panel("Information Panel",
+        "This is a panel with some content.\n"
+        "It can span multiple lines.\n"
+        "And supports Unicode: 你好世界 🎉");
+    
+    panel.setTitleColor(Color(ColorName::Green));
+    panel.print(console);
+    
+    return 0;
+@}
+@end example
+
+@subsubheading Markdown 渲染
+
+@example
+#include "termtools.h"
+using namespace termtools;
+
+int main() @{
+    std::string markdown = R"(
+# Welcome to TermTools
+
+This is a **bold** text and this is *italic* text.
+
+## Features
+
+- Color support
+- Text styling
+- Tables
+- Progress bars
+
+```cpp
+int main() @{
+    return 0;
+@}
+```
+)";
+    
+    Markdown md(markdown);
+    md.print();
+    
+    return 0;
+@}
+@end example
+
+@subsection 模块导航索引
+
+TermTools 的完整文档分为以下模块，您可以点击链接查看各模块的详细文档：
+
+@table @asis
+@item 颜色系统
+@xref{Color,,Color,color,TermTools Color System} --- 16 色、256 色、真彩色支持
+
+@item 文本样式
+@xref{Style,,Style,style,TermTools Text Style} --- 粗体、斜体、下划线等样式
+
+@item 文本处理
+@xref{Text,,Text,text,TermTools Text Processing} --- 文本渲染、对齐、Markup 支持
+
+@item 控制台输出
+@xref{Console,,Console,console,TermTools Console Output} --- 终端控制、光标操作
+
+@item 表格组件
+@xref{Table,,Table,table,TermTools Table Component} --- 表格渲染、边框样式
+
+@item 进度条
+@xref{Progress,,Progress,progress,TermTools Progress Bar} --- 进度显示、旋转器动画
+
+@item 日志系统
+@xref{Logger,,Logger,logger,TermTools Logger System} --- 多级别日志、彩色输出
+
+@item 交互式提示
+@xref{Prompt,,Prompt,prompt,TermTools Interactive Prompt} --- 用户输入、选择菜单
+
+@item 键盘输入
+@xref{Keyboard,,Keyboard,keyboard,TermTools Keyboard Input} --- 原始模式、按键事件
+
+@item Markdown 渲染
+@xref{Markdown,,Markdown,markdown,TermTools Markdown Rendering} --- Markdown 解析与渲染
+
+@item UI 组件
+@xref{UI Components,,UI Components,ui-components,TermTools UI Components} --- Panel、Divider、Heading、List、Quote 等
+
+@item 工具函数
+@xref{Utilities,,Utilities,utils,TermTools Utility Functions} --- 文本处理、终端检测工具
+@end table
+
+@subsection API 设计约定
+
+TermTools 的 API 设计遵循以下约定：
+
+@subsubheading 命名空间
+
+所有公共 API 都位于 @code{termtools} 命名空间下。建议在源文件中使用 @code{using namespace termtools;} 以简化代码。
+
+@subsubheading 链式调用
+
+大多数类的方法返回 @code{*this} 的引用，支持链式调用风格：
+
+@example
+Text text("Hello");
+text.colored(Color(ColorName::Red))
+    .styled(StyleBuilder().bold().underline())
+    .align(Justify::Center, 80);
+@end example
+
+@subsubheading RAII 资源管理
+
+资源管理遵循 RAII 原则，对象生命周期结束时自动释放资源。例如 @code{Keyboard::RawModeGuard} 会在作用域结束时自动恢复终端模式。
+
+@subsubheading 异常安全
+
+所有 API 都提供基本的异常安全保证。不会抛出异常的 API 都标记为 @code{noexcept}。
+
+@subsection 性能考虑
+
+TermTools 在设计时充分考虑了性能因素：
+
+@itemize @bullet
+@item
+@strong{最小化系统调用}：通过缓冲机制减少 I/O 操作次数
+
+@item
+@strong{高效字符串处理}：使用移动语义和字符串视图避免不必要的拷贝
+
+@item
+@strong{延迟渲染}：只有在真正需要输出时才进行渲染计算
+
+@item
+@strong{编译期优化}：尽可能使用 @code{constexpr} 和模板元编程
+@end itemize
+
+@subsection 版本历史
+
+@table @asis
+@item Version 1.0.0
+初始发布版本，包含所有核心功能模块
+@end table
+
+@subsection 许可证
+
+TermTools 采用 MIT 许可证发布。您可以自由地在商业和非商业项目中使用、修改和分发本库。
+
+@subsection 贡献指南
+
+欢迎社区贡献！您可以通过以下方式参与：
+
+@itemize @bullet
+@item
+提交 Bug 报告和功能请求
+@item
+提交 Pull Request 改进代码
+@item
+完善文档和示例
+@item
+分享使用经验
+@end itemize
+
+@subsection 联系方式
+
+如有问题或建议，请通过以下方式联系：
+
+@itemize @bullet
+@item
+GitHub Issues: @url{https://github.com/yourusername/termtools/issues}
+@item
+项目主页: @url{https://github.com/yourusername/termtools}
+@end itemize

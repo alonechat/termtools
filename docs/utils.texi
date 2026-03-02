@@ -1,0 +1,997 @@
+@subsection 工具函数概述
+
+TermTools 提供了一系列实用工具函数，用于文本处理、时间格式化和终端能力检测。
+这些函数位于 @code{termtools::utils} 命名空间中，头文件为 @file{termtools/utils/utils.h}。
+
+@subheading 头文件引用
+
+@example
+#include <termtools/utils/utils.h>
+@end example
+
+@subsection 枚举类型
+
+@menu
+* Justify 枚举::              文本对齐方式
+* Overflow 枚举::             文本溢出处理方式
+@end menu
+
+@node Justify 枚举
+@subsubsection Justify 枚举
+
+@code{Justify} 枚举定义了文本对齐的方式，用于 @code{padText} 等函数中。
+
+@heading 枚举定义
+
+@example
+enum class Justify : uint8_t @{ Left, Center, Right @};
+@end example
+
+@heading 枚举值说明
+
+@table @code
+@item Left
+左对齐。文本从左侧开始，右侧填充填充字符。
+这是大多数函数的默认对齐方式。
+
+@item Center
+居中对齐。文本在指定宽度内居中显示，
+两侧均匀分布填充字符。
+
+@item Right
+右对齐。文本从右侧开始，左侧填充填充字符。
+@end table
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string text = "Hello";
+    
+    // 左对齐（默认）
+    std::cout << utils::padText(text, 10, Justify::Left) << "|" << std::endl;
+    // 输出: Hello     |
+    
+    // 居中对齐
+    std::cout << utils::padText(text, 10, Justify::Center) << "|" << std::endl;
+    // 输出:   Hello   |
+    
+    // 右对齐
+    std::cout << utils::padText(text, 10, Justify::Right) << "|" << std::endl;
+    // 输出:      Hello|
+    
+    return 0;
+@}
+@end example
+
+@node Overflow 枚举
+@subsubsection Overflow 枚举
+
+@code{Overflow} 枚举定义了文本溢出时的处理方式，
+用于文本换行、截断等操作。
+
+@heading 枚举定义
+
+@example
+enum class Overflow : uint8_t @{ Fold, Crop, Ellipsis, Ignore @};
+@end example
+
+@heading 枚举值说明
+
+@table @code
+@item Fold
+折叠。将超出宽度的文本换行到下一行，
+保持所有文本内容完整可见。
+
+@item Crop
+裁剪。直接截断超出宽度的文本，
+不添加任何提示符号。
+
+@item Ellipsis
+省略号。截断超出宽度的文本，
+并在末尾添加省略号（...）表示文本被截断。
+
+@item Ignore
+忽略。不做任何处理，保留原始文本，
+即使超出指定宽度。
+@end table
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string longText = "This is a very long text";
+    
+    // 不同溢出处理方式的效果
+    std::cout << "Fold: " << utils::wrapText(longText, 10) << std::endl;
+    std::cout << "Crop: " << utils::truncateText(longText, 10, "") << std::endl;
+    std::cout << "Ellipsis: " << utils::truncateText(longText, 10) << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsection ANSI 处理函数
+
+@menu
+* stripAnsi 函数::            移除 ANSI 转义码
+@end menu
+
+@node stripAnsi 函数
+@subsubsection stripAnsi 函数
+
+@code{stripAnsi} 函数用于移除文本中的 ANSI 转义序列，
+返回纯净的文本内容。
+
+@heading 函数签名
+
+@example
+std::string stripAnsi(const std::string &text);
+@end example
+
+@heading 参数说明
+
+@table @var
+@item text
+输入文本，可能包含 ANSI 转义序列。
+@end table
+
+@heading 返回值
+
+返回移除所有 ANSI 转义序列后的纯文本字符串。
+
+@heading 功能说明
+
+ANSI 转义序列用于控制终端的颜色、样式等显示效果。
+当需要计算文本的实际显示宽度或进行纯文本处理时，
+需要先移除这些不可见的控制字符。
+
+该函数能够识别并移除以下类型的 ANSI 序列：
+@itemize
+@item 颜色设置序列（如 @code{\033[31m}）
+@item 样式设置序列（如 @code{\033[1m}）
+@item 光标控制序列
+@item 其他 CSI（Control Sequence Introducer）序列
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <termtools/color.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    // 创建带颜色的文本
+    std::string colored = color::fg(ColorName::Red) + "Hello" + color::reset();
+    // colored 包含 ANSI 转义码
+    
+    // 移除 ANSI 转义码
+    std::string plain = utils::stripAnsi(colored);
+    
+    std::cout << "原始文本长度（含转义码）: " << colored.length() << std::endl;
+    std::cout << "纯文本长度: " << plain.length() << std::endl;
+    std::cout << "纯文本内容: " << plain << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 计算文本的实际显示宽度
+@item 将带样式的文本保存到文件
+@item 日志记录时去除控制字符
+@item 文本搜索和比较
+@end itemize
+
+@subsection 文本宽度函数
+
+@menu
+* measureTextWidth 函数::    测量文本显示宽度
+@end menu
+
+@node measureTextWidth 函数
+@subsubsection measureTextWidth 函数
+
+@code{measureTextWidth} 函数用于测量文本在终端中的实际显示宽度，
+正确处理 UTF-8 编码和宽字符。
+
+@heading 函数签名
+
+@example
+int measureTextWidth(const std::string &text);
+@end example
+
+@heading 参数说明
+
+@table @var
+@item text
+要测量宽度的文本字符串。支持 UTF-8 编码。
+@end table
+
+@heading 返回值
+
+返回文本在终端中的实际显示宽度（以字符列为单位）。
+
+@heading 功能说明
+
+该函数考虑了以下因素：
+@itemize
+@item ANSI 转义序列不占用显示宽度
+@item ASCII 字符占用 1 列宽度
+@item 中文、日文等 CJK 字符通常占用 2 列宽度
+@item 某些特殊 Unicode 字符可能占用 0 列或 2 列宽度
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    // ASCII 文本
+    std::cout << "ASCII: " << utils::measureTextWidth("Hello") << std::endl;
+    // 输出: 5
+    
+    // 中文文本（每个汉字占 2 列）
+    std::cout << "中文: " << utils::measureTextWidth("你好") << std::endl;
+    // 输出: 4
+    
+    // 混合文本
+    std::cout << "混合: " << utils::measureTextWidth("Hello世界") << std::endl;
+    // 输出: 9 (5 + 4)
+    
+    // 包含 ANSI 转义码的文本（转义码不计入宽度）
+    std::string colored = "\033[31mHello\033[0m";
+    std::cout << "带颜色: " << utils::measureTextWidth(colored) << std::endl;
+    // 输出: 5
+    
+    return 0;
+@}
+@end example
+
+@heading 注意事项
+
+@itemize
+@item 宽度计算基于 Unicode 标准的 East_Asian_Width 属性
+@item 实际显示效果可能因终端字体和配置而异
+@item 制表符（Tab）按 1 列计算，实际显示可能不同
+@end itemize
+
+@subsection 文本换行函数
+
+@menu
+* wrapText 函数::             文本换行处理
+@end menu
+
+@node wrapText 函数
+@subsubsection wrapText 函数
+
+@code{wrapText} 函数将文本按指定宽度进行换行，
+正确处理 UTF-8 字符边界。
+
+@heading 函数签名
+
+@example
+std::string wrapText(const std::string &text, int width);
+@end example
+
+@heading 参数说明
+
+@table @var
+@item text
+要换行的文本字符串。
+
+@item width
+目标行宽，以字符列数计算。
+@end table
+
+@heading 返回值
+
+返回换行后的文本，使用换行符（@code{\n}）分隔各行。
+
+@heading 功能说明
+
+该函数实现了智能换行：
+@itemize
+@item 优先在空格、标点等自然断点处换行
+@item 正确处理 UTF-8 多字节字符，不会在字符中间断开
+@item 考虑宽字符（如中文）的实际显示宽度
+@item 保留原始文本中的现有换行符
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string text = "This is a long sentence that needs to be wrapped.";
+    
+    // 按 20 列宽度换行
+    std::string wrapped = utils::wrapText(text, 20);
+    std::cout << wrapped << std::endl;
+    // 输出:
+    // This is a long
+    // sentence that needs
+    // to be wrapped.
+    
+    // 中文文本换行
+    std::string chinese = "这是一段需要换行的中文文本示例";
+    std::string wrappedCN = utils::wrapText(chinese, 10);
+    std::cout << wrappedCN << std::endl;
+    // 输出:
+    // 这是一段需
+    // 要换行的中
+    // 文本示例
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 终端输出格式化
+@item 日志消息排版
+@item 文本编辑器实现
+@item 命令行帮助信息显示
+@end itemize
+
+@subsection 文本截断函数
+
+@menu
+* truncateText 函数::         文本截断处理
+@end menu
+
+@node truncateText 函数
+@subsubsection truncateText 函数
+
+@code{truncateText} 函数将文本截断到指定宽度，
+可选添加后缀表示截断。
+
+@heading 函数签名
+
+@example
+std::string truncateText(const std::string &text, int width,
+                         const std::string &suffix = "...");
+@end example
+
+@heading 参数说明
+
+@table @var
+@item text
+要截断的文本字符串。
+
+@item width
+目标最大宽度，以字符列数计算。
+
+@item suffix
+截断后添加的后缀字符串，默认为 @code{"..."}。
+后缀宽度包含在总宽度内。
+@end table
+
+@heading 返回值
+
+返回截断后的文本。如果原文本宽度小于等于目标宽度，
+则返回原文本。
+
+@heading 功能说明
+
+该函数的特点：
+@itemize
+@item 正确处理 UTF-8 字符边界，不会截断多字节字符
+@item 考虑宽字符的实际显示宽度
+@item 后缀宽度计入总宽度
+@item 如果指定宽度不足以容纳后缀，则只返回后缀
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string text = "This is a long text";
+    
+    // 默认省略号后缀
+    std::cout << utils::truncateText(text, 10) << std::endl;
+    // 输出: This is...
+    
+    // 自定义后缀
+    std::cout << utils::truncateText(text, 12, "...more") << std::endl;
+    // 输出: This...more
+    
+    // 无后缀截断
+    std::cout << utils::truncateText(text, 10, "") << std::endl;
+    // 输出: This is a 
+    
+    // 中文文本截断
+    std::string chinese = "这是一段很长的中文文本";
+    std::cout << utils::truncateText(chinese, 10) << std::endl;
+    // 输出: 这是一段... (4个汉字=8列 + 3点=3列 = 11列，实际会调整为合适宽度)
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 表格单元格内容限制
+@item 文件名显示截断
+@item 日志消息预览
+@item UI 组件文本适配
+@end itemize
+
+@subsection 文本填充函数
+
+@menu
+* padText 函数::              文本填充与对齐
+@end menu
+
+@node padText 函数
+@subsubsection padText 函数
+
+@code{padText} 函数将文本填充到指定宽度，
+支持左对齐、居中和右对齐。
+
+@heading 函数签名
+
+@example
+std::string padText(const std::string &text, int width,
+                    Justify justify = Justify::Left, char fill = ' ');
+@end example
+
+@heading 参数说明
+
+@table @var
+@item text
+要填充的文本字符串。
+
+@item width
+目标宽度，以字符列数计算。
+
+@item justify
+对齐方式，使用 @code{Justify} 枚举值：
+@itemize
+@item @code{Justify::Left} - 左对齐（默认）
+@item @code{Justify::Center} - 居中对齐
+@item @code{Justify::Right} - 右对齐
+@end itemize
+
+@item fill
+填充字符，默认为空格（@code{' '}）。
+@end table
+
+@heading 返回值
+
+返回填充后的文本。如果原文本宽度大于目标宽度，
+则返回原文本不做处理。
+
+@heading 功能说明
+
+该函数的特点：
+@itemize
+@item 正确计算 UTF-8 文本的实际显示宽度
+@item 支持三种对齐方式
+@item 可自定义填充字符
+@item 居中对齐时，如果无法完全对称，左侧会少一个填充字符
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string text = "Hello";
+    
+    // 左对齐（默认）
+    std::cout << "[" << utils::padText(text, 10) << "]" << std::endl;
+    // 输出: [Hello     ]
+    
+    // 居中对齐
+    std::cout << "[" << utils::padText(text, 10, Justify::Center) << "]" << std::endl;
+    // 输出: [  Hello   ]
+    
+    // 右对齐
+    std::cout << "[" << utils::padText(text, 10, Justify::Right) << "]" << std::endl;
+    // 输出: [     Hello]
+    
+    // 自定义填充字符
+    std::cout << "[" << utils::padText(text, 10, Justify::Left, '-') << "]" << std::endl;
+    // 输出: [Hello-----]
+    
+    // 中文文本填充
+    std::string chinese = "你好";
+    std::cout << "[" << utils::padText(chinese, 10, Justify::Center) << "]" << std::endl;
+    // 输出: [   你好    ] (每个汉字占2列，共4列，两侧各3列空格)
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 表格列对齐
+@item 进度条文本格式化
+@item 终端 UI 布局
+@item 日志格式化输出
+@end itemize
+
+@subsection 时间格式化函数
+
+@menu
+* getCurrentTime 函数::       获取当前时间
+* formatDuration 函数::       格式化时长
+@end menu
+
+@node getCurrentTime 函数
+@subsubsection getCurrentTime 函数
+
+@code{getCurrentTime} 函数获取当前时间并格式化为字符串。
+
+@heading 函数签名
+
+@example
+std::string getCurrentTime(const std::string &format = "%Y-%m-%d %H:%M:%S");
+@end example
+
+@heading 参数说明
+
+@table @var
+@item format
+时间格式字符串，使用 @code{strftime} 格式说明符。
+默认格式为 @code{"%Y-%m-%d %H:%M:%S"}。
+@end table
+
+@heading 返回值
+
+返回格式化后的当前时间字符串。
+
+@heading 格式说明符
+
+常用格式说明符：
+@table @code
+@item %Y
+四位数的年份（如 2024）
+
+@item %m
+两位数的月份（01-12）
+
+@item %d
+两位数的日期（01-31）
+
+@item %H
+24小时制的小时（00-23）
+
+@item %M
+分钟（00-59）
+
+@item %S
+秒（00-59）
+
+@item %I
+12小时制的小时（01-12）
+
+@item %p
+AM/PM 标记
+
+@item %A
+完整的星期名称
+
+@item %a
+缩写的星期名称
+@end table
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    // 默认格式
+    std::cout << utils::getCurrentTime() << std::endl;
+    // 输出: 2024-01-15 14:30:25
+    
+    // 自定义格式
+    std::cout << utils::getCurrentTime("%Y/%m/%d") << std::endl;
+    // 输出: 2024/01/15
+    
+    // 带星期
+    std::cout << utils::getCurrentTime("%A, %B %d, %Y") << std::endl;
+    // 输出: Monday, January 15, 2024
+    
+    // 12小时制
+    std::cout << utils::getCurrentTime("%I:%M %p") << std::endl;
+    // 输出: 02:30 PM
+    
+    return 0;
+@}
+@end example
+
+@node formatDuration 函数
+@subsubsection formatDuration 函数
+
+@code{formatDuration} 函数将秒数格式化为易读的时长字符串。
+
+@heading 函数签名
+
+@example
+std::string formatDuration(double seconds);
+@end example
+
+@heading 参数说明
+
+@table @var
+@item seconds
+时长，以秒为单位。可以是小数表示毫秒。
+@end table
+
+@heading 返回值
+
+返回格式化后的时长字符串，格式根据时长自动选择：
+@itemize
+@item 小于 1 秒：显示毫秒（如 @code{"500ms"}）
+@item 小于 1 分钟：显示秒（如 @code{"30s"}）
+@item 小于 1 小时：显示分钟和秒（如 @code{"5m 30s"}）
+@item 大于等于 1 小时：显示小时、分钟和秒（如 @code{"2h 15m 30s"}）
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    // 毫秒级
+    std::cout << utils::formatDuration(0.5) << std::endl;
+    // 输出: 500ms
+    
+    std::cout << utils::formatDuration(0.123) << std::endl;
+    // 输出: 123ms
+    
+    // 秒级
+    std::cout << utils::formatDuration(30.0) << std::endl;
+    // 输出: 30s
+    
+    std::cout << utils::formatDuration(45.5) << std::endl;
+    // 输出: 45.50s
+    
+    // 分钟级
+    std::cout << utils::formatDuration(90.0) << std::endl;
+    // 输出: 1m 30s
+    
+    std::cout << utils::formatDuration(333.0) << std::endl;
+    // 输出: 5m 33s
+    
+    // 小时级
+    std::cout << utils::formatDuration(3661.0) << std::endl;
+    // 输出: 1h 1m 1s
+    
+    std::cout << utils::formatDuration(7325.0) << std::endl;
+    // 输出: 2h 2m 5s
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 进度条剩余时间显示
+@item 性能计时输出
+@item 任务执行时间统计
+@item 日志时间戳记录
+@end itemize
+
+@subsection 终端检测函数
+
+@menu
+* isTerminal 函数::           检测标准输出是否为终端
+* isColorTerminal 函数::      检测终端颜色支持
+* isUnicodeTerminal 函数::    检测终端 Unicode 支持
+@end menu
+
+@node isTerminal 函数
+@subsubsection isTerminal 函数
+
+@code{isTerminal} 函数检测标准输出是否连接到终端。
+
+@heading 函数签名
+
+@example
+bool isTerminal();
+@end example
+
+@heading 返回值
+
+如果标准输出连接到终端（TTY），返回 @code{true}；
+如果输出被重定向到文件或管道，返回 @code{false}。
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    if (utils::isTerminal()) @{
+        std::cout << "输出到终端" << std::endl;
+    @} else @{
+        std::cout << "输出被重定向" << std::endl;
+    @}
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 决定是否输出颜色和样式
+@item 控制进度条和动画显示
+@item 调整输出格式（终端 vs 文件）
+@end itemize
+
+@node isColorTerminal 函数
+@subsubsection isColorTerminal 函数
+
+@code{isColorTerminal} 函数检测终端是否支持彩色输出。
+
+@heading 函数签名
+
+@example
+bool isColorTerminal();
+@end example
+
+@heading 返回值
+
+如果终端支持彩色输出，返回 @code{true}；否则返回 @code{false}。
+
+@heading 功能说明
+
+该函数检测以下条件：
+@itemize
+@item 标准输出是否连接到终端
+@item @code{TERM} 环境变量是否指示颜色支持
+@item 是否存在颜色支持的终端类型标识
+@end itemize
+
+常见的支持颜色的终端类型：
+@itemize
+@item @code{xterm}, @code{xterm-256color}
+@item @code{screen}, @code{screen-256color}
+@item @code{tmux}
+@item @code{linux}
+@item @code{vt100} 及以上
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <termtools/color.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    std::string message = "Hello, World!";
+    
+    if (utils::isColorTerminal()) @{
+        // 输出彩色文本
+        std::cout << color::fg(ColorName::Green) << message << color::reset() << std::endl;
+    @} else @{
+        // 输出纯文本
+        std::cout << message << std::endl;
+    @}
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 自动启用/禁用颜色输出
+@item 选择合适的颜色深度（16色/256色/真彩色）
+@item 兼容性处理
+@end itemize
+
+@node isUnicodeTerminal 函数
+@subsubsection isUnicodeTerminal 函数
+
+@code{isUnicodeTerminal} 函数检测终端是否支持 Unicode 字符。
+
+@heading 函数签名
+
+@example
+bool isUnicodeTerminal();
+@end example
+
+@heading 返回值
+
+如果终端支持 Unicode 字符显示，返回 @code{true}；否则返回 @code{false}。
+
+@heading 功能说明
+
+该函数检测以下条件：
+@itemize
+@item 终端是否支持 UTF-8 编码
+@item @code{LANG} 或 @code{LC_ALL} 环境变量是否包含 UTF-8
+@item 终端类型是否已知支持 Unicode
+@end itemize
+
+@heading 使用示例
+
+@example
+#include <termtools/utils/utils.h>
+#include <iostream>
+
+int main() @{
+    using namespace termtools;
+    
+    if (utils::isUnicodeTerminal()) @{
+        // 使用 Unicode 符号
+        std::cout << "✓ 成功" << std::endl;
+        std::cout << "✗ 失败" << std::endl;
+        std::cout << "→ 下一步" << std::endl;
+        std::cout << "★ 收藏" << std::endl;
+    @} else @{
+        // 使用 ASCII 替代
+        std::cout << "[OK] 成功" << std::endl;
+        std::cout << "[X]  失败" << std::endl;
+        std::cout << "->  下一步" << std::endl;
+        std::cout << "[*] 收藏" << std::endl;
+    @}
+    
+    return 0;
+@}
+@end example
+
+@heading 应用场景
+
+@itemize
+@item 选择合适的边框字符（Unicode vs ASCII）
+@item 进度条符号选择
+@item 图标和符号显示
+@item 表格边框样式
+@end itemize
+
+@subsection 综合示例
+
+以下示例展示了工具函数的综合应用：
+
+@example
+#include <termtools/utils/utils.h>
+#include <termtools/color.h>
+#include <iostream>
+
+using namespace termtools;
+
+void printProgressBar(const std::string& label, int current, int total) @{
+    int width = 30;
+    double ratio = static_cast<double>(current) / total;
+    int filled = static_cast<int>(ratio * width);
+    
+    // 截断标签以适应显示
+    std::string truncatedLabel = utils::truncateText(label, 15);
+    
+    // 填充标签到固定宽度
+    std::string paddedLabel = utils::padText(truncatedLabel, 15, Justify::Left);
+    
+    // 构建进度条
+    std::string bar;
+    if (utils::isUnicodeTerminal()) @{
+        bar = std::string(filled, '█') + std::string(width - filled, '░');
+    @} else @{
+        bar = std::string(filled, '#') + std::string(width - filled, '-');
+    @}
+    
+    // 计算剩余时间（模拟）
+    double elapsed = 10.0 * ratio;
+    double remaining = 10.0 * (1.0 - ratio);
+    
+    // 输出进度条
+    std::cout << "\r" << paddedLabel << " [";
+    
+    if (utils::isColorTerminal()) @{
+        if (ratio < 0.5) @{
+            std::cout << color::fg(ColorName::Yellow);
+        @} else if (ratio < 1.0) @{
+            std::cout << color::fg(ColorName::Green);
+        @} else @{
+            std::cout << color::fg(ColorName::Cyan);
+        @}
+    @}
+    
+    std::cout << bar;
+    
+    if (utils::isColorTerminal()) @{
+        std::cout << color::reset();
+    @}
+    
+    std::cout << "] " << static_cast<int>(ratio * 100) << "% ";
+    std::cout << "ETA: " << utils::formatDuration(remaining);
+    std::cout << std::flush;
+@}
+
+int main() @{
+    // 显示终端能力
+    std::cout << "终端检测:" << std::endl;
+    std::cout << "  isTerminal: " << (utils::isTerminal() ? "是" : "否") << std::endl;
+    std::cout << "  isColorTerminal: " << (utils::isColorTerminal() ? "是" : "否") << std::endl;
+    std::cout << "  isUnicodeTerminal: " << (utils::isUnicodeTerminal() ? "是" : "否") << std::endl;
+    std::cout << std::endl;
+    
+    // 显示当前时间
+    std::cout << "当前时间: " << utils::getCurrentTime() << std::endl;
+    std::cout << std::endl;
+    
+    // 文本处理示例
+    std::string text = "这是一段用于演示文本处理功能的示例文本";
+    std::cout << "原始文本: " << text << std::endl;
+    std::cout << "文本宽度: " << utils::measureTextWidth(text) << std::endl;
+    std::cout << "截断(10列): " << utils::truncateText(text, 10) << std::endl;
+    std::cout << "填充(20列): [" << utils::padText(text, 20, Justify::Center) << "]" << std::endl;
+    std::cout << std::endl;
+    
+    // 进度条演示
+    std::cout << "进度条演示:" << std::endl;
+    for (int i = 0; i <= 100; i += 5) @{
+        printProgressBar("下载文件", i, 100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    @}
+    std::cout << std::endl;
+    
+    return 0;
+@}
+@end example
+
+@subsection 相关模块
+
+工具函数与以下模块相关：
+
+@itemize
+@item @xref{Text,,Text,text,TermTools Text Processing} - Text 类内部使用这些工具函数
+@item @xref{Console,,Console,console,TermTools Console Output} - Console 类使用终端检测函数
+@item @xref{Progress,,Progress,progress,TermTools Progress Bar} - ProgressBar 使用时间格式化函数
+@item @xref{Table,,Table,table,TermTools Table Component} - Table 使用文本宽度和填充函数
+@end itemize

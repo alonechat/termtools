@@ -67,6 +67,14 @@ bool Keyboard::isRawModeEnabled() {
     return rawModeEnabled;
 }
 
+Keyboard::RawModeGuard::RawModeGuard() {
+    setRawMode(true);
+}
+
+Keyboard::RawModeGuard::~RawModeGuard() {
+    setRawMode(false);
+}
+
 Keyboard::KeyEvent Keyboard::readKey(bool blocking) {
     KeyEvent event;
     event.key = Key::Unknown;

@@ -19,5 +19,8 @@ target_link_libraries(prompt termtools)
 add_executable(keyboard keyboard_demo.cpp)
 target_link_libraries(keyboard termtools)
 
+add_executable(markdown markdown_demo.cpp)
+target_link_libraries(markdown termtools)
+
 # add_executable(test_progress test_progress.cpp)
 # target_link_libraries(test_progress termtools)

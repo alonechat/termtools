@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(termtools VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -23,8 +23,14 @@ set(TERMTOOLS_SOURCES
         termtools/ui/panel.cpp
         termtools/ui/columns.cpp
         termtools/ui/group.cpp
+        termtools/ui/heading.cpp
+        termtools/ui/codeblock.cpp
+        termtools/ui/list.cpp
+        termtools/ui/quote.cpp
+        termtools/ui/divider.cpp
         termtools/utils/utils.cpp
         termtools/core/platform.cpp
+        termtools/markdown/markdown.cpp
 )
 
 add_library(termtools STATIC ${TERMTOOLS_SOURCES})

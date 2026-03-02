@@ -1,14 +1,23 @@
 # TermTools
 
-TODO
+A modern C++ library for terminal UI components, inspired by Python's [rich](https://github.com/Textualize/rich) library.
 
 ## Features
 
-TODO
+- **Color Support**: 16 colors, 256 colors, and True Color (RGB) support
+- **Text Styling**: Bold, italic, underline, strikethrough, and more
+- **Tables**: Flexible table rendering with multiple border styles
+- **Progress Bars**: Animated progress bars with spinners
+- **Markdown Rendering**: Render Markdown content with syntax highlighting
+- **Logging**: Colored log output with multiple log levels
+- **Interactive Prompts**: User input handling with validation
+- **Keyboard Input**: Raw mode keyboard input support
+- **UTF-8 Support**: Full Unicode support including CJK characters and Emoji
+- **Cross-Platform**: Works on Linux, macOS, and Windows
 
 ## Requirements
 
-- C++14 or higher
+- C++17 or higher
 - CMake 3.14+
 
 ## Building

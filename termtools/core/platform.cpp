@@ -223,7 +223,7 @@ static int getUtf8CharWidth(unsigned char firstByte) {
     return 1;
 }
 
-static int getDisplayWidth(unsigned char firstByte) {
+static int getDisplayWidth(unsigned char firstByte, const std::string& text, size_t pos) {
     if ((firstByte & 0x80) == 0x00) {
         return 1;
     } else if ((firstByte & 0xE0) == 0xC0) {
@@ -238,6 +238,25 @@ static int getDisplayWidth(unsigned char firstByte) {
         }
         return 2;
     } else if ((firstByte & 0xF8) == 0xF0) {
+        if (pos + 3 < text.size()) {
+            uint32_t codepoint = 
+                ((uint32_t)(firstByte & 0x07) << 18) |
+                ((uint32_t)(text[pos + 1] & 0x3F) << 12) |
+                ((uint32_t)(text[pos + 2] & 0x3F) << 6) |
+                ((uint32_t)(text[pos + 3] & 0x3F));
+            
+            if ((codepoint >= 0x1F600 && codepoint <= 0x1F64F) ||
+                (codepoint >= 0x1F300 && codepoint <= 0x1F5FF) ||
+                (codepoint >= 0x1F680 && codepoint <= 0x1F6FF) ||
+                (codepoint >= 0x1F1E0 && codepoint <= 0x1F1FF) ||
+                (codepoint >= 0x2600 && codepoint <= 0x26FF) ||
+                (codepoint >= 0x2700 && codepoint <= 0x27BF) ||
+                (codepoint >= 0x1F900 && codepoint <= 0x1F9FF) ||
+                (codepoint >= 0x1FA00 && codepoint <= 0x1FA6F) ||
+                (codepoint >= 0x1FA70 && codepoint <= 0x1FAFF)) {
+                return 2;
+            }
+        }
         return 2;
     }
     return 1;
@@ -266,7 +285,7 @@ int measureUtf8Width(const std::string& text) {
         }
         
         int charLen = getUtf8CharWidth(c);
-        int displayWidth = getDisplayWidth(c);
+        int displayWidth = getDisplayWidth(c, text, i);
         
         width += displayWidth;
         i += charLen;
@@ -319,7 +338,7 @@ std::string wrapText(const std::string& text, int width) {
         }
         
         int charLen = getUtf8CharWidth(c);
-        int displayWidth = getDisplayWidth(c);
+        int displayWidth = getDisplayWidth(c, text, i);
         
         if (currentWidth + displayWidth > width && !line.empty()) {
             result += line + "\n";
@@ -377,7 +396,7 @@ std::string truncateText(const std::string& text, int width, const std::string& 
         }
         
         int charLen = getUtf8CharWidth(c);
-        int displayWidth = getDisplayWidth(c);
+        int displayWidth = getDisplayWidth(c, text, i);
         
         if (currentWidth + displayWidth > availableWidth) {
             break;

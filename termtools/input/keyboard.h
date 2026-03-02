@@ -47,6 +47,14 @@ class Keyboard {
 
     using KeyEventCallback = std::function<void(const KeyEvent &)>;
 
+    class RawModeGuard {
+    public:
+        RawModeGuard();
+        ~RawModeGuard();
+        RawModeGuard(const RawModeGuard&) = delete;
+        RawModeGuard& operator=(const RawModeGuard&) = delete;
+    };
+
     static void setRawMode(bool enable);
     static bool isRawModeEnabled();
 

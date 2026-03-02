@@ -14,6 +14,7 @@ namespace termtools {
 class Console {
   public:
     Console();
+    explicit Console(std::ostream &stream);
     ~Console();
 
     void print(const std::string &text);

@@ -10,6 +10,11 @@ Console::Console()
       unicodeSupported_(internal::isUnicodeSupported()), encoding_("UTF-8"),
       bufferingEnabled_(true) {}
 
+Console::Console(std::ostream &stream)
+    : stream_(&stream), colorSupported_(internal::isColorSupported()),
+      unicodeSupported_(internal::isUnicodeSupported()), encoding_("UTF-8"),
+      bufferingEnabled_(true) {}
+
 Console::~Console() { flush(); }
 
 void Console::print(const std::string &text) {
@@ -191,8 +196,7 @@ Console &Console::getStdout() {
 }
 
 Console &Console::getStderr() {
-    static Console instance;
-    instance.stream_ = &std::cerr;
+    static Console instance(std::cerr);
     return instance;
 }
 

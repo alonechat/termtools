@@ -1,12 +1,10 @@
 #ifndef TERMTOOLS_UTILS_H
 #define TERMTOOLS_UTILS_H
 
+#include "termtools/core/internal/types.h"
 #include <string>
 
 namespace termtools {
-
-enum class Justify : uint8_t { Left, Center, Right };
-enum class Overflow : uint8_t { Fold, Crop, Ellipsis, Ignore };
 
 namespace utils {
 

@@ -10,27 +10,28 @@ option(TERMTOOLS_BUILD_TESTS "Build tests" ON)
 option(TERMTOOLS_INSTALL "Generate install target" ON)
 
 set(TERMTOOLS_SOURCES
-        termtools/color/color.cpp
-        termtools/core/style.cpp
-        termtools/text/text.cpp
-        termtools/core/console.cpp
-        termtools/ui/table.cpp
-        termtools/progress/progress.cpp
-        termtools/logger/status.cpp
-        termtools/logger/logger.cpp
-        termtools/input/prompt.cpp
-        termtools/input/keyboard.cpp
-        termtools/ui/panel.cpp
-        termtools/ui/columns.cpp
-        termtools/ui/group.cpp
-        termtools/ui/heading.cpp
-        termtools/ui/codeblock.cpp
-        termtools/ui/list.cpp
-        termtools/ui/quote.cpp
-        termtools/ui/divider.cpp
+        termtools/core/formatting/color.cpp
+        termtools/core/formatting/style.cpp
+        termtools/core/formatting/text.cpp
+        termtools/core/output/console.cpp
+        termtools/components/table/table.cpp
+        termtools/components/progress/progress.cpp
+        termtools/components/logger/status.cpp
+        termtools/components/logger/logger.cpp
+        termtools/core/input/prompt.cpp
+        termtools/core/input/keyboard.cpp
+        termtools/components/panel/panel.cpp
+        termtools/ui/columns/columns.cpp
+        termtools/ui/group/group.cpp
+        termtools/ui/heading/heading.cpp
+        termtools/ui/codeblock/codeblock.cpp
+        termtools/ui/list/list.cpp
+        termtools/ui/quote/quote.cpp
+        termtools/ui/divider/divider.cpp
         termtools/utils/utils.cpp
-        termtools/core/platform.cpp
-        termtools/markdown/markdown.cpp
+        termtools/core/internal/platform.cpp
+        termtools/components/markdown/markdown.cpp
+        pixel/backend/backend.cpp
 )
 
 add_library(termtools STATIC ${TERMTOOLS_SOURCES})
@@ -68,10 +69,9 @@ set_target_properties(termtools PROPERTIES
 )
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
-    # Create symlink to compile_commands.json in project root for IDE support
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink 
-            "${CMAKE_BINARY_DIR}/compile_commands.json" 
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "${CMAKE_BINARY_DIR}/compile_commands.json"
             "${CMAKE_SOURCE_DIR}/compile_commands.json"
         ERROR_QUIET OUTPUT_QUIET
     )

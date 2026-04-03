@@ -31,7 +31,7 @@ set(TERMTOOLS_SOURCES
         termtools/utils/utils.cpp
         termtools/core/internal/platform.cpp
         termtools/components/markdown/markdown.cpp
-        pixel/backend/backend.cpp
+        termtools/pixel/backend/backend.cpp
 )
 
 add_library(termtools STATIC ${TERMTOOLS_SOURCES})
